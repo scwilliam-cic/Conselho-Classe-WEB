@@ -1,14 +1,19 @@
 import streamlit as st
 import pandas as pd
 import datetime
-from io import BytesIO
+from streamlit_gsheets import GSheetsConnection
 
 # Configuração da Página
 st.set_page_config(page_title="Conselho de Classe Imaculada", layout="centered", page_icon="📝")
 
 st.title("📝 Formulário de Conselho de Classe")
 
-# --- DICIONÁRIOS DE DADOS ---
+# Conexão com o Google Sheets
+# Use o link da sua planilha aqui
+url = "https://docs.google.com/spreadsheets/d/1bGcDE5Q-Dz0dhQgeqcHiLSS8WUqc2icvWb4k8SwxAwQ/edit#gid=0"
+conn = st.connection("gsheets", type=GSheetsConnection)
+
+# --- DICIONÁRIOS DE DADOS (Mantendo seu roteiro original) ---
 roteiro_aluno = {
     "1. Perfil Geral do Aluno": {
         "O desempenho geral do aluno é:": ["Totalmente compatível com a série", "Parcialmente compatível", "Abaixo do esperado", "Muito abaixo do esperado"],
@@ -54,76 +59,39 @@ roteiro_aluno = {
     }
 }
 
-roteiro_turma = {
-    "1. Desempenho Geral da Turma": {
-        "O desempenho geral da turma é:": ["Muito satisfatório", "Satisfatório", "Parcialmente satisfatório", "Insatisfatório"],
-        "Em relação à evolução ao longo do período letivo, a turma:": ["Apresentou evolução significativa", "Apresentou evolução gradual", "Evoluiu pouco", "Não apresentou evolução"],
-        "A turma, de modo geral, compreende os conteúdos essenciais?": ["Compreende plenamente", "Compreende com pequenas dificuldades", "Compreende parcialmente", "Apresenta grandes dificuldades"],
-        "O ritmo de aprendizagem da turma é:": ["Adequado", "Um pouco abaixo do esperado", "Abaixo do esperado", "Muito abaixo do esperado"]
-    },
-    "2. Participação e Engajamento Coletivo": {
-        "A participação da turma nas atividades propostas é:": ["Ativa e constante", "Regular", "Irregular", "Baixa"],
-        "O interesse da turma pelo processo de aprendizagem é:": ["Elevado", "Moderado", "Baixo", "Muito baixo"],
-        "Quanto à atenção durante as aulas, a turma:": ["Mantém atenção constante", "Apresenta pequenas dispersões", "Dispersa-se com frequência", "Raramente mantém atenção"],
-        "A autonomia da turma na realização das atividades é:": ["Alta", "Média", "Baixa", "Muito baixa"]
-    },
-    "3. Organização e Postura da Turma": {
-        "A postura geral da turma em sala de aula é:": ["Adequada", "Parcialmente adequada", "Inadequada em alguns momentos", "Frequentemente inesperada"],
-        "O cumprimento de tarefas e prazos pela turma é:": ["Regular e pontual", "Majoritariamente regular", "Irregular", "Raramente cumprido"],
-        "A organização dos materiais e registros da turma é:": ["Adequada", "Parcialmente adequada", "Pouco adequada", "Inadequada"]
-    },
-    "4. Avaliação e Aprendizagem": {
-        "Os resultados das avaliações da turma indicam:": ["Bom domínio dos conteúdos", "Domínio parcial", "Baixo domínio", "Domínio insuficiente"],
-        "A turma apresenta dificuldades significativas em:": ["Conteúdos pontuais", "Alguns componentes curriculares", "Vários componentes curriculares", "De forma generalizada"],
-        "A interpretação de enunciados pela turma é:": ["Adequada", "Parcialmente adequada", "Deficiente", "Muito deficiente"],
-        "O desempenho da turma ao longo do período é:": ["Constante", "Com pequenas oscilações", "Com oscilações frequentes", "Muito instável"]
-    },
-    "5. Estratégias Pedagógicas e Encaminhamentos": {
-        "As estratégias pedagógicas adotadas atenderam às necessidades da turma?": ["Sim, plenamente", "Sim, parcialmente", "Pouco", "Não atenderam"],
-        "A turma responde melhor a:": ["Aulas expositivas", "Atividades práticas e dinâmicas", "Trabalhos em grupo", "Mediação constante do professor"],
-        "Há necessidade de replanejamento das práticas pedagógicas?": ["Não há necessidade", "Pequenos ajustes", "Ajustes significativos", "Reestruturação do planejamento"],
-        "A turma necessita de ações de recuperação da aprendizagem?": ["Não", "Pontuais", "Contínuas", "Intensivas"],
-        "Considerando o conjunto das análises, a turma:": ["Apresenta bom aproveitamento", "Apresenta aproveitamento satisfatório", "Apresenta aproveitamento parcial", "Apresenta baixo aproveitamento"]
-    }
-}
-
 # --- INTERFACE ---
 col1, col2 = st.columns(2)
 with col1: prof = st.text_input("👤 Professor(a)")
 with col2: turma_sel = st.selectbox("🏫 Turma", ["1º Ano A", "2º Ano A", "3º Ano A", "4º Ano A", "5º Ano A"])
 
-tab1, tab2 = st.tabs(["Avaliação Aluno (Individual)", "Avaliação Turma (Coletiva)"])
+aluno = st.text_input("🎓 Nome do Aluno")
+resp_aluno = {"Data": datetime.datetime.now().strftime("%d/%m/%Y"), "Prof": prof, "Turma": turma_sel, "Aluno": aluno}
 
-with tab1:
-    aluno = st.text_input("🎓 Nome do Aluno")
-    resp_aluno = {"Data": datetime.datetime.now().strftime("%d/%m/%Y"), "Prof": prof, "Turma": turma_sel, "Aluno": aluno}
-    for sec, pergs in roteiro_aluno.items():
-        st.subheader(sec)
-        for p, opts in pergs.items():
-            resp_aluno[p] = st.radio(p, opts, key=f"al_{p}")
-
-with tab2:
-    st.info(f"Avaliação da Turma: {turma_sel}")
-    resp_turma = {"Data": datetime.datetime.now().strftime("%d/%m/%Y"), "Prof": prof, "Turma": turma_sel}
-    for sec, pergs in roteiro_turma.items():
-        st.subheader(sec)
-        for p, opts in pergs.items():
-            resp_turma[p] = st.radio(p, opts, key=f"tr_{p}")
+for sec, pergs in roteiro_aluno.items():
+    st.subheader(sec)
+    for p, opts in pergs.items():
+        resp_aluno[p] = st.radio(p, opts, key=f"al_{p}")
 
 st.markdown("---")
-if st.button("💾 FINALIZAR E GERAR PLANILHA", type="primary", use_container_width=True):
-    if not prof or (not aluno and "Aluno" in resp_aluno):
+
+if st.button("💾 ENVIAR PARA PLANILHA CENTRAL", type="primary", use_container_width=True):
+    if not prof or not aluno:
         st.error("Por favor, preencha o nome do Professor e do Aluno!")
     else:
-        output = BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            pd.DataFrame([resp_aluno]).to_excel(writer, index=False, sheet_name='Aluno')
-            pd.DataFrame([resp_turma]).to_excel(writer, index=False, sheet_name='Turma')
-        
-        st.success("Planilha gerada com sucesso!")
-        st.download_button(
-            label="⬇️ Baixar Excel",
-            data=output.getvalue(),
-            file_name=f"Conselho_{turma_sel}_{datetime.date.today()}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+        try:
+            # 1. Lê os dados que já existem na planilha
+            dados_existentes = conn.read(spreadsheet=url)
+            
+            # 2. Prepara a nova linha
+            nova_linha = pd.DataFrame([resp_aluno])
+            
+            # 3. Junta o novo dado com os antigos
+            tabela_final = pd.concat([dados_existentes, nova_linha], ignore_index=True)
+            
+            # 4. Atualiza a planilha no Google
+            conn.update(spreadsheet=url, data=tabela_final)
+            
+            st.success("✅ Resposta enviada com sucesso para a planilha central!")
+            st.balloons()
+        except Exception as e:
+            st.error(f"Erro ao salvar: {e}")
