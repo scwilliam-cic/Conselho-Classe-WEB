@@ -3,95 +3,115 @@ import pandas as pd
 import datetime
 from streamlit_gsheets import GSheetsConnection
 
-# Configuração da Página
-st.set_page_config(page_title="Conselho de Classe Imaculada", layout="centered", page_icon="📝")
+# 1. Configuração da Página
+st.set_page_config(page_title="Conselho de Classe Imaculada", layout="wide", page_icon="📝")
+
+# 2. Conexão com Google Sheets (Configurada via Secrets no Streamlit Cloud)
+conn = st.connection("gsheets", type=GSheetsConnection)
+url = "https://docs.google.com/spreadsheets/d/1bGcDE5Q-Dz0dhQgeqcHiLSS8WUqc2icvWb4k8SwxAwQ/edit#gid=1477512121"
 
 st.title("📝 Formulário de Conselho de Classe")
 
-# Conexão com o Google Sheets
-# Use o link da sua planilha aqui
-url = "https://docs.google.com/spreadsheets/d/1bGcDE5Q-Dz0dhQgeqcHiLSS8WUqc2icvWb4k8SwxAwQ/edit#gid=0"
-conn = st.connection("gsheets", type=GSheetsConnection)
+# --- IDENTIFICAÇÃO ---
+c1, c2 = st.columns(2)
+with c1: 
+    prof = st.text_input("👤 Nome do Professor(a)")
+with c2: 
+    turma_sel = st.selectbox("🏫 Turma", ["1º Ano A", "2º Ano A", "3º Ano A", "4º Ano A", "5º Ano A"])
 
-# --- DICIONÁRIOS DE DADOS (Mantendo seu roteiro original) ---
-roteiro_aluno = {
-    "1. Perfil Geral do Aluno": {
-        "O desempenho geral do aluno é:": ["Totalmente compatível com a série", "Parcialmente compatível", "Abaixo do esperado", "Muito abaixo do esperado"],
-        "Em relação à evolução ao longo do período, o aluno:": ["Apresentou evolução significativa", "Evoluiu de forma gradual", "Evoluiu pouco", "Não apresentou evolução"],
-        "Quanto à compreensão dos conteúdos essenciais, o aluno:": ["Compreende plenamente", "Compreende com pequenas dificuldades", "Compreende parcialmente", "Apresenta grandes dificuldades"],
-        "O ritmo de aprendizagem do aluno é:": ["Adequado", "Um pouco abaixo", "Abaixo do esperado", "Muito abaixo"],
-        "O desempenho do aluno indica:": ["Domínio dos objetivos de aprendizagem", "Atendimento parcial aos objetivos", "Atendimento mínimo", "Não atendimento aos objetivos"]
-    },
-    "2. Engajamento e Postura": {
-        "A participação do aluno em sala é:": ["Frequente e ativa", "Regular", "Eventual", "Rara"],
-        "O interesse demonstrado pelo aluno é:": ["Elevado", "Moderado", "Baixo", "Muito baixo"],
-        "Quanto à atenção durante as aulas, o aluno:": ["Mantém atenção constante", "Apresenta pequenas dispersões", "Dispersa-se com frequência", "Raramente mantém atenção"],
-        "A autonomia do aluno na realização das atividades é:": ["Alta", "Média", "Baixa", "Inexistente"],
-        "A postura do aluno no ambiente escolar é:": ["Adequada", "Parcialmente adequada", "Inadequada em alguns momentos", "Frequentemente inadequada"]
-    },
-    "3. Potencialidades (Pontos Positivos)": {
-        "O aluno demonstra potencial nas áreas:": ["Linguagem e comunicação", "Raciocínio lógico/matemático", "Criatividade e resolução de problemas", "Ainda não apresenta destaque evidente"],
-        "Em relação às orientações dos professores, o aluno:": ["Assimila e aplica", "Assimila parcialmente", "Demonstra dificuldade em aplicar", "Não demonstra assimilação"],
-        "O comprometimento com as atividades é:": ["Alto", "Moderado", "Baixo", "Muito baixo"],
-        "O aluno demonstra esforço mesmo diante de dificuldades?": ["Sempre", "Frequentemente", "Raramente", "Nunca"],
-        "O aluno apresenta:": ["Constância no desempenho", "Oscilações leves", "Oscilações frequentes", "Desempenho instável"]
-    },
-    "4. Dificuldades Identificadas": {
-        "As dificuldades apresentadas pelo aluno são:": ["Pontuais", "Em alguns componentes", "Em vários componentes", "Generalizadas"],
-        "As principais dificuldades estão relacionadas a:": ["Conteúdo específico", "Interpretação e compreensão", "Organização e atenção", "Múltiplos fatores"],
-        "Nas avaliações, o aluno:": ["Demonstra domínio do conteúdo", "Demonstra compreensão parcial", "Demonstra insegurança", "Responde de forma aleatória"],
-        "Em relação à leitura e interpretação de enunciados:": ["Não apresenta dificuldades", "Apresenta pequenas dificuldades", "Apresenta dificuldades frequentes", "Apresenta grandes dificuldades"],
-        "O comportamento do aluno:": ["Não interfere no aprendizado", "Interfere ocasionalmente", "Interfere com frequência", "Compromete significativamente"]
-    },
-    "5. Causas Prováveis": {
-        "As dificuldades parecem estar relacionadas a:": ["Defasagem de conteúdos anteriores", "Falta de estudo sistemático", "Dificuldades de concentração", "Conjunto de fatores"],
-        "O aluno responde melhor quando:": ["Trabalha de forma autônoma", "Recebe mediação do professor", "Realiza atividades em grupo", "Recebe acompanhamento individual"],
-        "O acompanhamento familiar é:": ["Presente e efetivo", "Presente, porém irregular", "Pouco presente", "Inexistente"],
-        "O aluno demonstra consciência de suas dificuldades?": ["Sim, claramente", "Parcialmente", "Pouco", "Não demonstra"],
-        "O aluno utiliza estratégias próprias para aprender?": ["Sim, com autonomia", "Às vezes", "Raramente", "Não utiliza"]
-    },
-    "6. Intervenções e Encaminhamentos": {
-        "As estratégias pedagógicas adotadas até o momento:": ["Foram eficazes", "Foram parcialmente eficazes", "Pouco eficazes", "Não surtiram efeito"],
-        "O aluno necessita de:": ["Acompanhamento regular", "Reforço pontual", "Reforço contínuo", "Acompanhamento individualizado"],
-        "A recuperação da aprendizagem deve ocorrer:": ["Em sala de aula", "Em atividades complementares", "Em atendimento específico", "Em múltiplas frentes"],
-        "Para melhor aproveitamento, recomenda-se:": ["Manutenção das estratégias atuais", "Ajustes pedagógicos pontuais", "Reestruturação das estratégias", "Plano de intervenção individual"],
-        "Considerando o conjunto das análises, o aluno:": ["Apresenta bom aproveitamento", "Apresenta aproveitamento parcial", "Apresenta baixo aproveitamento", "Necessita intervenção intensiva"]
-    }
-}
+tab1, tab2 = st.tabs(["🎓 Avaliação Aluno (Individual)", "👥 Avaliação Turma (Coletiva)"])
 
-# --- INTERFACE ---
-col1, col2 = st.columns(2)
-with col1: prof = st.text_input("👤 Professor(a)")
-with col2: turma_sel = st.selectbox("🏫 Turma", ["1º Ano A", "2º Ano A", "3º Ano A", "4º Ano A", "5º Ano A"])
+# --- ABA 1: ALUNO (30 PERGUNTAS) ---
+with tab1:
+    aluno_nome = st.text_input("🎓 Nome do Aluno")
+    res_al = {"Data": datetime.datetime.now().strftime("%d/%m/%Y"), "Prof": prof, "Turma": turma_sel, "Aluno": aluno_nome, "Tipo": "Individual"}
+    
+    col_al1, col_al2 = st.columns(2)
+    with col_al1:
+        st.subheader("1. Perfil Geral")
+        res_al["A1"] = st.radio("O desempenho geral é:", ["Totalmente compatível", "Parcialmente", "Abaixo do esperado", "Muito abaixo"], key="al1")
+        res_al["A2"] = st.radio("Evolução no período:", ["Significativa", "Gradual", "Pouca", "Não apresentou"], key="al2")
+        res_al["A3"] = st.radio("Compreensão de conteúdos:", ["Plena", "Pequenas dificuldades", "Parcial", "Grandes dificuldades"], key="al3")
+        res_al["A4"] = st.radio("Ritmo de aprendizagem:", ["Adequado", "Um pouco abaixo", "Abaixo", "Muito abaixo"], key="al4")
+        res_al["A5"] = st.radio("Atendimento aos objetivos:", ["Domínio total", "Parcial", "Mínimo", "Não atendimento"], key="al5")
+        st.subheader("2. Engajamento")
+        res_al["A6"] = st.radio("Participação em sala:", ["Frequente e ativa", "Regular", "Eventual", "Rara"], key="al6")
+        res_al["A7"] = st.radio("Interesse demonstrado:", ["Elevado", "Moderado", "Baixo", "Muito baixo"], key="al7")
+        res_al["A8"] = st.radio("Atenção nas aulas:", ["Constante", "Pequenas dispersões", "Frequentes", "Rara"], key="al8")
+        res_al["A9"] = st.radio("Autonomia:", ["Alta", "Média", "Baixa", "Inexistente"], key="al9")
+        res_al["A10"] = st.radio("Postura escolar:", ["Adequada", "Parcialmente", "Inadequada", "Muito inadequada"], key="al10")
+        st.subheader("3. Potencialidades")
+        res_al["A11"] = st.radio("Demonstra potencial em:", ["Linguagem", "Raciocínio", "Criatividade", "Nenhuma área evidente"], key="al11")
+        res_al["A12"] = st.radio("Assimila orientações:", ["Sim", "Parcialmente", "Com dificuldade", "Não"], key="al12")
+        res_al["A13"] = st.radio("Comprometimento:", ["Alto", "Moderado", "Baixo", "Muito baixo"], key="al13")
+        res_al["A14"] = st.radio("Esforço nas dificuldades:", ["Sempre", "Frequentemente", "Raramente", "Nunca"], key="al14")
+        res_al["A15"] = st.radio("Constância:", ["Constante", "Oscilações leves", "Oscilações frequentes", "Instável"], key="al15")
 
-aluno = st.text_input("🎓 Nome do Aluno")
-resp_aluno = {"Data": datetime.datetime.now().strftime("%d/%m/%Y"), "Prof": prof, "Turma": turma_sel, "Aluno": aluno}
+    with col_al2:
+        st.subheader("4. Dificuldades")
+        res_al["A16"] = st.radio("As dificuldades são:", ["Pontuais", "Alguns componentes", "Vários", "Generalizadas"], key="al16")
+        res_al["A17"] = st.radio("Relacionadas a:", ["Conteúdo", "Interpretação", "Organização", "Múltiplos fatores"], key="al17")
+        res_al["A18"] = st.radio("Nas avaliações:", ["Domina", "Parcial", "Insegurança", "Aleatório"], key="al18")
+        res_al["A19"] = st.radio("Leitura/Interpretação:", ["Sem dificuldades", "Pequenas", "Frequentes", "Grandes"], key="al19")
+        res_al["A20"] = st.radio("Comportamento:", ["Não interfere", "Ocasional", "Interfere", "Compromete"], key="al20")
+        st.subheader("5. Causas")
+        res_al["A21"] = st.radio("Causa provável:", ["Defasagem", "Falta de estudo", "Concentração", "Emocional"], key="al21")
+        res_al["A22"] = st.radio("Responde melhor:", ["Autônomo", "Mediação", "Em grupo", "Individual"], key="al22")
+        res_al["A23"] = st.radio("Família:", ["Efetiva", "Irregular", "Pouco presente", "Inexistente"], key="al23")
+        res_al["A24"] = st.radio("Consciência dificuldade:", ["Sim", "Parcialmente", "Pouco", "Não"], key="al24")
+        res_al["A25"] = st.radio("Estratégias próprias:", ["Sim", "Às vezes", "Raramente", "Não"], key="al25")
+        st.subheader("6. Intervenções")
+        res_al["A26"] = st.radio("Estratégias adotadas:", ["Eficazes", "Parciais", "Pouco eficazes", "Sem efeito"], key="al26")
+        res_al["A27"] = st.radio("Necessita de:", ["Acompanhamento", "Reforço pontual", "Reforço contínuo", "Individualizado"], key="al27")
+        res_al["A28"] = st.radio("Recuperação:", ["Em sala", "Complementar", "Específica", "Múltiplas"], key="al28")
+        res_al["A29"] = st.radio("Recomenda-se:", ["Manutenção", "Ajustes", "Reestruturação", "Plano individual"], key="al29")
+        res_al["A30"] = st.radio("Conclusão:", ["Bom aproveitamento", "Parcial", "Baixo", "Urgente"], key="al30")
 
-for sec, pergs in roteiro_aluno.items():
-    st.subheader(sec)
-    for p, opts in pergs.items():
-        resp_aluno[p] = st.radio(p, opts, key=f"al_{p}")
+# --- ABA 2: TURMA (20 PERGUNTAS) ---
+with tab2:
+    st.info(f"Avaliação da Turma: {turma_sel}")
+    res_tr = {"Data": datetime.datetime.now().strftime("%d/%m/%Y"), "Prof": prof, "Turma": turma_sel, "Aluno": "---", "Tipo": "Turma"}
+    col_tr1, col_tr2 = st.columns(2)
+    with col_tr1:
+        st.subheader("1. Desempenho")
+        res_tr["T1"] = st.radio("Desempenho da turma:", ["Muito satisfatório", "Satisfatório", "Parcial", "Insatisfatório"], key="tr1")
+        res_tr["T2"] = st.radio("Evolução:", ["Significativa", "Gradual", "Pouca", "Não houve"], key="tr2")
+        res_tr["T3"] = st.radio("Compreensão coletiva:", ["Plena", "Pequenas dificuldades", "Parcial", "Grandes"], key="tr3")
+        res_tr["T4"] = st.radio("Ritmo da turma:", ["Adequado", "Pouco abaixo", "Abaixo", "Muito abaixo"], key="tr4")
+        st.subheader("2. Participação")
+        res_tr["T5"] = st.radio("Participação coletiva:", ["Ativa", "Regular", "Irregular", "Baixa"], key="tr5")
+        res_tr["T6"] = st.radio("Interesse:", ["Elevado", "Moderado", "Baixo", "Muito baixo"], key="tr6")
+        res_tr["T7"] = st.radio("Atenção:", ["Constante", "Pequenas dispersões", "Frequentes", "Rara"], key="tr7")
+        res_tr["T8"] = st.radio("Autonomia coletiva:", ["Alta", "Média", "Baixa", "Muito baixa"], key="tr8")
+        st.subheader("3. Postura")
+        res_tr["T9"] = st.radio("Postura em sala:", ["Adequada", "Parcialmente", "Inadequada", "Inesperada"], key="tr9")
+        res_tr["T10"] = st.radio("Prazos e tarefas:", ["Regular", "Majoritariamente", "Irregular", "Raramente"], key="tr10")
+    with col_tr2:
+        res_tr["T11"] = st.radio("Organização material:", ["Adequada", "Parcialmente", "Pouco", "Inadequada"], key="tr11")
+        st.subheader("4. Resultados")
+        res_tr["T12"] = st.radio("Avaliações indicam:", ["Bom domínio", "Parcial", "Baixo", "Insuficiente"], key="tr12")
+        res_tr["T13"] = st.radio("Dificuldade em:", ["Conteúdos pontuais", "Alguns", "Vários", "Generalizada"], key="tr13")
+        res_tr["T14"] = st.radio("Interpretação:", ["Adequada", "Parcial", "Deficiente", "Muito deficiente"], key="tr14")
+        res_tr["T15"] = st.radio("Constância da turma:", ["Constante", "Pequenas oscilações", "Frequentes", "Instável"], key="tr15")
+        st.subheader("5. Estratégias")
+        res_tr["T16"] = st.radio("Atendimento necessidades:", ["Sim", "Parcialmente", "Pouco", "Não"], key="tr16")
+        res_tr["T17"] = st.radio("Respondem melhor a:", ["Expositivas", "Práticas", "Grupo", "Mediação"], key="tr17")
+        res_tr["T18"] = st.radio("Replanejamento:", ["Não há", "Pequenos", "Significativos", "Reestruturação"], key="tr18")
+        res_tr["T19"] = st.radio("Recuperação:", ["Não", "Pontuais", "Contínuas", "Intensivas"], key="tr19")
+        res_tr["T20"] = st.radio("Aproveitamento final:", ["Bom", "Satisfatório", "Parcial", "Baixo"], key="tr20")
 
+# --- BOTÃO DE ENVIO WEB ---
 st.markdown("---")
-
-if st.button("💾 ENVIAR PARA PLANILHA CENTRAL", type="primary", use_container_width=True):
-    if not prof or not aluno:
-        st.error("Por favor, preencha o nome do Professor e do Aluno!")
+if st.button("💾 ENVIAR RESPOSTAS PARA PLANILHA CENTRAL", type="primary", use_container_width=True):
+    if not prof:
+        st.error("⚠️ Preencha o nome do Professor!")
     else:
         try:
-            # 1. Lê os dados que já existem na planilha
-            dados_existentes = conn.read(spreadsheet=url)
-            
-            # 2. Prepara a nova linha
-            nova_linha = pd.DataFrame([resp_aluno])
-            
-            # 3. Junta o novo dado com os antigos
-            tabela_final = pd.concat([dados_existentes, nova_linha], ignore_index=True)
-            
-            # 4. Atualiza a planilha no Google
-            conn.update(spreadsheet=url, data=tabela_final)
-            
-            st.success("✅ Resposta enviada com sucesso para a planilha central!")
+            dados_para_salvar = res_al if aluno_nome else res_tr
+            df_atual = conn.read(spreadsheet=url, ttl=0)
+            df_final = pd.concat([df_atual, pd.DataFrame([dados_para_salvar])], ignore_index=True)
+            conn.update(spreadsheet=url, data=df_final)
+            st.success("✅ Gravado com sucesso na nuvem!")
             st.balloons()
         except Exception as e:
-            st.error(f"Erro ao salvar: {e}")
+            st.error(f"Erro de permissão: {e}. Verifique os Secrets e se o bot é EDITOR na planilha.")
