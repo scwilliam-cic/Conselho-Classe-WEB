@@ -21,7 +21,7 @@ with c2:
 
 tab1, tab2 = st.tabs(["🎓 Avaliação Aluno (Individual)", "👥 Avaliação Turma (Coletiva)"])
 
-# --- ABA 1: ALUNO (30 PERGUNTAS) ---
+# --- ABA 1: ALUNO (30 PERGUNTAS + COMENTÁRIO) ---
 with tab1:
     aluno_nome = st.text_input("🎓 Nome do Aluno")
     col_al1, col_al2 = st.columns(2)
@@ -52,19 +52,22 @@ with tab1:
         p19 = st.radio("Em relação à leitura e interpretação de enunciados:", ["Não apresenta dificuldades", "Apresenta pequenas dificuldades", "Apresenta dificuldades frequentes", "Apresenta grandes dificuldades"], key="al19")
         p20 = st.radio("O comportamento do aluno:", ["Não interfere no aprendizado", "Interfere ocasionalmente", "Interfere com frequência", "Compromete significativamente"], key="al20")
         st.subheader("5. Causas")
-        p21 = st.radio("As dificuldades parecem relacionadas a:", ["Defasagem anterior", "Falta de estudo", "Concentração", "Conjunto de fatores"], key="al21")
-        p22 = st.radio("Responde melhor quando:", ["Trabalha autônomo", "Recebe mediação", "Em grupo", "Acompanhamento individual"], key="al22")
+        p21 = st.radio("As dificuldades parecem estar relacionadas a:", ["Defasagem anterior", "Falta de estudo", "Concentração", "Conjunto de fatores"], key="al21")
+        p22 = st.radio("O aluno responde melhor quando:", ["Trabalha autônomo", "Recebe mediação", "Em grupo", "Acompanhamento individual"], key="al22")
         p23 = st.radio("O acompanhamento familiar é:", ["Presente e efetivo", "Presente, porém irregular", "Pouco presente", "Inexistente"], key="al23")
-        p24 = st.radio("Demonstra consciência de suas dificuldades?", ["Sim, claramente", "Parcialmente", "Pouco", "Não demonstra"], key="al24")
-        p25 = st.radio("Utiliza estratégias próprias para aprender?", ["Sim, com autonomia", "Às vezes", "Raramente", "Não utiliza"], key="al25")
+        p24 = st.radio("O aluno demonstra consciência de suas dificuldades?", ["Sim, claramente", "Parcialmente", "Pouco", "Não demonstra"], key="al24")
+        p25 = st.radio("O aluno utiliza estratégias próprias para aprender?", ["Sim, com autonomia", "Às vezes", "Raramente", "Não utiliza"], key="al25")
         st.subheader("6. Intervenções")
-        p26 = st.radio("Estratégias adotadas até o momento:", ["Eficazes", "Parcialmente eficazes", "Pouco eficazes", "Sem efeito"], key="al26")
+        p26 = st.radio("As estratégias pedagógicas adotadas até o momento:", ["Eficazes", "Parcialmente eficazes", "Pouco eficazes", "Sem efeito"], key="al26")
         p27 = st.radio("O aluno necessita de:", ["Acompanhamento regular", "Reforço pontual", "Reforço contínuo", "Acompanhamento individualizado"], key="al27")
-        p28 = st.radio("A recuperação deve ocorrer:", ["Em sala", "Atividades complementares", "Atendimento específico", "Múltiplas frentes"], key="al28")
+        p28 = st.radio("A recuperação da aprendizagem deve ocorrer:", ["Em sala", "Atividades complementares", "Atendimento específico", "Múltiplas frentes"], key="al28")
         p29 = st.radio("Recomenda-se:", ["Manutenção atual", "Ajustes pontuais", "Reestruturação", "Plano individual"], key="al29")
         p30 = st.radio("Considerando o conjunto, o aluno:", ["Bom aproveitamento", "Aproveitamento parcial", "Baixo aproveitamento", "Intervenção intensiva"], key="al30")
 
-# --- ABA 2: TURMA (20 PERGUNTAS) ---
+    st.divider()
+    coment_aluno = st.text_area("💬 CONSIDERAÇÕES FINAIS (Individual):", placeholder="Escreva aqui observações extras sobre o aluno...")
+
+# --- ABA 2: TURMA (20 PERGUNTAS + COMENTÁRIO) ---
 with tab2:
     st.info(f"Avaliação da Turma: {turma_sel}")
     col_tr1, col_tr2 = st.columns(2)
@@ -96,6 +99,9 @@ with tab2:
         t19 = st.radio("Ações de recuperação da aprendizagem foram necessárias?", ["Não", "Pontuais", "Contínuas", "Intensivas"], key="tr19")
         t20 = st.radio("Considerando o conjunto, a turma apresenta:", ["Bom aproveitamento", "Aproveitamento satisfatório", "Aproveitamento parcial", "Baixo aproveitamento"], key="tr20")
 
+    st.divider()
+    coment_turma = st.text_area("💬 CONSIDERAÇÕES FINAIS (Turma):", placeholder="Escreva aqui observações gerais sobre o desempenho da turma...")
+
 # --- BOTÃO DE ENVIO WEB ---
 st.markdown("---")
 if st.button("💾 ENVIAR RESPOSTAS PARA PLANILHA CENTRAL", type="primary", use_container_width=True):
@@ -112,8 +118,9 @@ if st.button("💾 ENVIAR RESPOSTAS PARA PLANILHA CENTRAL", type="primary", use_
                     "A participação do aluno em sala é:": p6, "O interesse demonstrado pelo aluno é:": p7, "Quanto à atenção durante as aulas, o aluno:": p8, "A autonomia do aluno na realização das atividades é:": p9, "A postura do aluno no ambiente escolar é:": p10,
                     "O aluno demonstra potencial nas áreas:": p11, "Em relação às orientações dos professores, o aluno:": p12, "O comprometimento com as atividades é:": p13, "O aluno demonstra esforço mesmo diante de dificuldades?": p14, "O aluno apresenta:": p15,
                     "As dificuldades apresentadas pelo aluno são:": p16, "As principais dificuldades estão relacionadas a:": p17, "Nas avaliações, o aluno:": p18, "Em relação à leitura e interpretação de enunciados:": p19, "O comportamento do aluno:": p20,
-                    "As dificuldades parecem relacionadas a:": p21, "Responde melhor quando:": p22, "O acompanhamento familiar é:": p23, "Demonstra consciência de suas dificuldades?": p24, "Utiliza estratégias próprias para aprender?": p25,
-                    "Estratégias adotadas até o momento:": p26, "O aluno necessita de:": p27, "A recuperação deve ocorrer:": p28, "Recomenda-se:": p29, "Considerando o conjunto, o aluno:": p30
+                    "As dificuldades parecem estar relacionadas a:": p21, "O aluno responde melhor quando:": p22, "O acompanhamento familiar é:": p23, "O aluno demonstra consciência de suas dificuldades?": p24, "O aluno utiliza estratégias próprias para aprender?": p25,
+                    "As estratégias pedagógicas adotadas até o momento:": p26, "O aluno necessita de:": p27, "A recuperação da aprendizagem deve ocorrer:": p28, "Recomenda-se:": p29, "Considerando o conjunto, o aluno:": p30,
+                    "CONSIDERAÇÕES FINAIS": coment_aluno
                 }
             else:
                 dados = {
@@ -121,10 +128,12 @@ if st.button("💾 ENVIAR RESPOSTAS PARA PLANILHA CENTRAL", type="primary", use_
                     "Desempenho geral da turma:": t1, "Em relação à evolução ao longo do período letivo, a turma:": t2, "A turma, de modo geral, compreende os conteúdos essenciais?": t3, "O ritmo de aprendizagem da turma é:": t4, "A participação da turma nas atividades propostas é:": t5,
                     "O interesse da turma pelo processo de aprendizagem é:": t6, "Quanto à atenção durante as aulas, a turma:": t7, "A autonomia da turma na realização das atividades é:": t8, "A postura geral da turma em sala de aula é:": t9, "O cumprimento de tarefas e prazos pela turma é:": t10,
                     "A organização de materiais e registros pela turma é:": t11, "Os resultados das avaliações indicam:": t12, "A turma apresenta dificuldades significativas em:": t13, "Em relação à leitura e interpretação de enunciados, a turma é:": t14, "O desempenho da turma ao longo do período foi:": t15,
-                    "As estratégias pedagógicas atenderam às necessidades da turma?": t16, "A turma responde melhor a:": t17, "Há necessidade de replanejamento para a turma?": t18, "Ações de recuperação da aprendizagem foram necessárias?": t19, "Considerando o conjunto, a turma apresenta:": t20
+                    "As estratégias pedagógicas atenderam às necessidades da turma?": t16, "A turma responde melhor a:": t17, "Há necessidade de replanejamento para a turma?": t18, "Ações de recuperação da aprendizagem foram necessárias?": t19, "Considerando o conjunto, a turma apresenta:": t20,
+                    "CONSIDERAÇÕES FINAIS": coment_turma
                 }
             df_atual = conn.read(spreadsheet=url, ttl=0)
             df_final = pd.concat([df_atual, pd.DataFrame([dados])], ignore_index=True)
+            df_final = df_final.loc[:, ~df_final.columns.str.contains('^Unnamed')]
             conn.update(spreadsheet=url, data=df_final)
             st.success("✅ Gravado com sucesso na planilha central!")
             st.balloons()
