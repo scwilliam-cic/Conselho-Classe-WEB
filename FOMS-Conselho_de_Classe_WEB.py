@@ -6,7 +6,7 @@ from streamlit_gsheets import GSheetsConnection
 # 1. Configuração da Página
 st.set_page_config(page_title="Conselho de Classe Imaculada", layout="wide", page_icon="📝")
 
-# 2. Conexão com Google Sheets (Configurada via Secrets no Streamlit Cloud)
+# 2. Conexão com Google Sheets
 conn = st.connection("gsheets", type=GSheetsConnection)
 url = "https://docs.google.com/spreadsheets/d/1bGcDE5Q-Dz0dhQgeqcHiLSS8WUqc2icvWb4k8SwxAwQ/edit#gid=1477512121"
 
@@ -24,94 +24,109 @@ tab1, tab2 = st.tabs(["🎓 Avaliação Aluno (Individual)", "👥 Avaliação T
 # --- ABA 1: ALUNO (30 PERGUNTAS) ---
 with tab1:
     aluno_nome = st.text_input("🎓 Nome do Aluno")
-    res_al = {"Data": datetime.datetime.now().strftime("%d/%m/%Y"), "Prof": prof, "Turma": turma_sel, "Aluno": aluno_nome, "Tipo": "Individual"}
-    
     col_al1, col_al2 = st.columns(2)
     with col_al1:
         st.subheader("1. Perfil Geral")
-        res_al["A1"] = st.radio("O desempenho geral é:", ["Totalmente compatível", "Parcialmente", "Abaixo do esperado", "Muito abaixo"], key="al1")
-        res_al["A2"] = st.radio("Evolução no período:", ["Significativa", "Gradual", "Pouca", "Não apresentou"], key="al2")
-        res_al["A3"] = st.radio("Compreensão de conteúdos:", ["Plena", "Pequenas dificuldades", "Parcial", "Grandes dificuldades"], key="al3")
-        res_al["A4"] = st.radio("Ritmo de aprendizagem:", ["Adequado", "Um pouco abaixo", "Abaixo", "Muito abaixo"], key="al4")
-        res_al["A5"] = st.radio("Atendimento aos objetivos:", ["Domínio total", "Parcial", "Mínimo", "Não atendimento"], key="al5")
+        p1 = st.radio("O desempenho geral do aluno é:", ["Totalmente compatível com a série", "Parcialmente compatível", "Abaixo do esperado", "Muito abaixo do esperado"], key="al1")
+        p2 = st.radio("Em relação à evolução ao longo do período, o aluno:", ["Apresentou evolução significativa", "Evoluiu de forma gradual", "Evoluiu pouco", "Não apresentou evolução"], key="al2")
+        p3 = st.radio("Quanto à compreensão dos conteúdos essenciais, o aluno:", ["Compreende plenamente", "Compreende com pequenas dificuldades", "Compreende parcialmente", "Apresenta grandes dificuldades"], key="al3")
+        p4 = st.radio("O ritmo de aprendizagem do aluno é:", ["Adequado", "Um pouco abaixo", "Abaixo do esperado", "Muito abaixo"], key="al4")
+        p5 = st.radio("O desempenho do aluno indica:", ["Domínio dos objetivos de aprendizagem", "Atendimento parcial aos objetivos", "Atendimento mínimo", "Não atendimento aos objetivos"], key="al5")
         st.subheader("2. Engajamento")
-        res_al["A6"] = st.radio("Participação em sala:", ["Frequente e ativa", "Regular", "Eventual", "Rara"], key="al6")
-        res_al["A7"] = st.radio("Interesse demonstrado:", ["Elevado", "Moderado", "Baixo", "Muito baixo"], key="al7")
-        res_al["A8"] = st.radio("Atenção nas aulas:", ["Constante", "Pequenas dispersões", "Frequentes", "Rara"], key="al8")
-        res_al["A9"] = st.radio("Autonomia:", ["Alta", "Média", "Baixa", "Inexistente"], key="al9")
-        res_al["A10"] = st.radio("Postura escolar:", ["Adequada", "Parcialmente", "Inadequada", "Muito inadequada"], key="al10")
+        p6 = st.radio("A participação do aluno em sala é:", ["Frequente e ativa", "Regular", "Eventual", "Rara"], key="al6")
+        p7 = st.radio("O interesse demonstrado pelo aluno é:", ["Elevado", "Moderado", "Baixo", "Muito baixo"], key="al7")
+        p8 = st.radio("Quanto à atenção durante as aulas, o aluno:", ["Mantém atenção constante", "Apresenta pequenas dispersões", "Dispersa-se com frequência", "Raramente mantém atenção"], key="al8")
+        p9 = st.radio("A autonomia do aluno na realização das atividades é:", ["Alta", "Média", "Baixa", "Inexistente"], key="al9")
+        p10 = st.radio("A postura do aluno no ambiente escolar é:", ["Adequada", "Parcialmente adequada", "Inadequada em alguns momentos", "Frequentemente inadequada"], key="al10")
         st.subheader("3. Potencialidades")
-        res_al["A11"] = st.radio("Demonstra potencial em:", ["Linguagem", "Raciocínio", "Criatividade", "Nenhuma área evidente"], key="al11")
-        res_al["A12"] = st.radio("Assimila orientações:", ["Sim", "Parcialmente", "Com dificuldade", "Não"], key="al12")
-        res_al["A13"] = st.radio("Comprometimento:", ["Alto", "Moderado", "Baixo", "Muito baixo"], key="al13")
-        res_al["A14"] = st.radio("Esforço nas dificuldades:", ["Sempre", "Frequentemente", "Raramente", "Nunca"], key="al14")
-        res_al["A15"] = st.radio("Constância:", ["Constante", "Oscilações leves", "Oscilações frequentes", "Instável"], key="al15")
-
+        p11 = st.radio("O aluno demonstra potencial nas áreas:", ["Linguagem e comunicação", "Raciocínio lógico/matemático", "Criatividade e resolução de problemas", "Ainda não apresenta destaque evidente"], key="al11")
+        p12 = st.radio("Em relação às orientações dos professores, o aluno:", ["Assimila e aplica", "Assimila parcialmente", "Demonstra dificuldade em aplicar", "Não demonstra assimilação"], key="al12")
+        p13 = st.radio("O comprometimento com as atividades é:", ["Alto", "Moderado", "Baixo", "Muito baixo"], key="al13")
+        p14 = st.radio("O aluno demonstra esforço mesmo diante de dificuldades?", ["Sempre", "Frequentemente", "Raramente", "Nunca"], key="al14")
+        p15 = st.radio("O aluno apresenta:", ["Constância no desempenho", "Oscilações leves", "Oscilações frequentes", "Desempenho instável"], key="al15")
     with col_al2:
         st.subheader("4. Dificuldades")
-        res_al["A16"] = st.radio("As dificuldades são:", ["Pontuais", "Alguns componentes", "Vários", "Generalizadas"], key="al16")
-        res_al["A17"] = st.radio("Relacionadas a:", ["Conteúdo", "Interpretação", "Organização", "Múltiplos fatores"], key="al17")
-        res_al["A18"] = st.radio("Nas avaliações:", ["Domina", "Parcial", "Insegurança", "Aleatório"], key="al18")
-        res_al["A19"] = st.radio("Leitura/Interpretação:", ["Sem dificuldades", "Pequenas", "Frequentes", "Grandes"], key="al19")
-        res_al["A20"] = st.radio("Comportamento:", ["Não interfere", "Ocasional", "Interfere", "Compromete"], key="al20")
+        p16 = st.radio("As dificuldades apresentadas pelo aluno são:", ["Pontuais", "Em alguns componentes", "Em vários componentes", "Generalizadas"], key="al16")
+        p17 = st.radio("As principais dificuldades estão relacionadas a:", ["Conteúdo específico", "Interpretação e compreensão", "Organização e atenção", "Múltiplos fatores"], key="al17")
+        p18 = st.radio("Nas avaliações, o aluno:", ["Demonstra domínio do conteúdo", "Demonstra compreensão parcial", "Demonstra insegurança", "Responde de forma aleatória"], key="al18")
+        p19 = st.radio("Em relação à leitura e interpretação de enunciados:", ["Não apresenta dificuldades", "Apresenta pequenas dificuldades", "Apresenta dificuldades frequentes", "Apresenta grandes dificuldades"], key="al19")
+        p20 = st.radio("O comportamento do aluno:", ["Não interfere no aprendizado", "Interfere ocasionalmente", "Interfere com frequência", "Compromete significativamente"], key="al20")
         st.subheader("5. Causas")
-        res_al["A21"] = st.radio("Causa provável:", ["Defasagem", "Falta de estudo", "Concentração", "Emocional"], key="al21")
-        res_al["A22"] = st.radio("Responde melhor:", ["Autônomo", "Mediação", "Em grupo", "Individual"], key="al22")
-        res_al["A23"] = st.radio("Família:", ["Efetiva", "Irregular", "Pouco presente", "Inexistente"], key="al23")
-        res_al["A24"] = st.radio("Consciência dificuldade:", ["Sim", "Parcialmente", "Pouco", "Não"], key="al24")
-        res_al["A25"] = st.radio("Estratégias próprias:", ["Sim", "Às vezes", "Raramente", "Não"], key="al25")
+        p21 = st.radio("As dificuldades parecem relacionadas a:", ["Defasagem anterior", "Falta de estudo", "Concentração", "Conjunto de fatores"], key="al21")
+        p22 = st.radio("Responde melhor quando:", ["Trabalha autônomo", "Recebe mediação", "Em grupo", "Acompanhamento individual"], key="al22")
+        p23 = st.radio("O acompanhamento familiar é:", ["Presente e efetivo", "Presente, porém irregular", "Pouco presente", "Inexistente"], key="al23")
+        p24 = st.radio("Demonstra consciência de suas dificuldades?", ["Sim, claramente", "Parcialmente", "Pouco", "Não demonstra"], key="al24")
+        p25 = st.radio("Utiliza estratégias próprias para aprender?", ["Sim, com autonomia", "Às vezes", "Raramente", "Não utiliza"], key="al25")
         st.subheader("6. Intervenções")
-        res_al["A26"] = st.radio("Estratégias adotadas:", ["Eficazes", "Parciais", "Pouco eficazes", "Sem efeito"], key="al26")
-        res_al["A27"] = st.radio("Necessita de:", ["Acompanhamento", "Reforço pontual", "Reforço contínuo", "Individualizado"], key="al27")
-        res_al["A28"] = st.radio("Recuperação:", ["Em sala", "Complementar", "Específica", "Múltiplas"], key="al28")
-        res_al["A29"] = st.radio("Recomenda-se:", ["Manutenção", "Ajustes", "Reestruturação", "Plano individual"], key="al29")
-        res_al["A30"] = st.radio("Conclusão:", ["Bom aproveitamento", "Parcial", "Baixo", "Urgente"], key="al30")
+        p26 = st.radio("Estratégias adotadas até o momento:", ["Eficazes", "Parcialmente eficazes", "Pouco eficazes", "Sem efeito"], key="al26")
+        p27 = st.radio("O aluno necessita de:", ["Acompanhamento regular", "Reforço pontual", "Reforço contínuo", "Acompanhamento individualizado"], key="al27")
+        p28 = st.radio("A recuperação deve ocorrer:", ["Em sala", "Atividades complementares", "Atendimento específico", "Múltiplas frentes"], key="al28")
+        p29 = st.radio("Recomenda-se:", ["Manutenção atual", "Ajustes pontuais", "Reestruturação", "Plano individual"], key="al29")
+        p30 = st.radio("Considerando o conjunto, o aluno:", ["Bom aproveitamento", "Aproveitamento parcial", "Baixo aproveitamento", "Intervenção intensiva"], key="al30")
 
 # --- ABA 2: TURMA (20 PERGUNTAS) ---
 with tab2:
     st.info(f"Avaliação da Turma: {turma_sel}")
-    res_tr = {"Data": datetime.datetime.now().strftime("%d/%m/%Y"), "Prof": prof, "Turma": turma_sel, "Aluno": "---", "Tipo": "Turma"}
     col_tr1, col_tr2 = st.columns(2)
     with col_tr1:
         st.subheader("1. Desempenho")
-        res_tr["T1"] = st.radio("Desempenho da turma:", ["Muito satisfatório", "Satisfatório", "Parcial", "Insatisfatório"], key="tr1")
-        res_tr["T2"] = st.radio("Evolução:", ["Significativa", "Gradual", "Pouca", "Não houve"], key="tr2")
-        res_tr["T3"] = st.radio("Compreensão coletiva:", ["Plena", "Pequenas dificuldades", "Parcial", "Grandes"], key="tr3")
-        res_tr["T4"] = st.radio("Ritmo da turma:", ["Adequado", "Pouco abaixo", "Abaixo", "Muito abaixo"], key="tr4")
+        t1 = st.radio("Desempenho geral da turma:", ["Muito satisfatório", "Satisfatório", "Parcialmente satisfatório", "Insatisfatório"], key="tr1")
+        t2 = st.radio("Em relação à evolução ao longo do período letivo, a turma:", ["Apresentou evolução significativa", "Apresentou evolução gradual", "Evoluiu pouco", "Não apresentou evolução"], key="tr2")
+        t3 = st.radio("A turma, de modo geral, compreende os conteúdos essenciais?", ["Compreende plenamente", "Compreende com pequenas dificuldades", "Compreende parcialmente", "Apresenta grandes dificuldades"], key="tr3")
+        t4 = st.radio("O ritmo de aprendizagem da turma é:", ["Adequado", "Um pouco abaixo", "Abaixo", "Muito abaixo"], key="tr4")
         st.subheader("2. Participação")
-        res_tr["T5"] = st.radio("Participação coletiva:", ["Ativa", "Regular", "Irregular", "Baixa"], key="tr5")
-        res_tr["T6"] = st.radio("Interesse:", ["Elevado", "Moderado", "Baixo", "Muito baixo"], key="tr6")
-        res_tr["T7"] = st.radio("Atenção:", ["Constante", "Pequenas dispersões", "Frequentes", "Rara"], key="tr7")
-        res_tr["T8"] = st.radio("Autonomia coletiva:", ["Alta", "Média", "Baixa", "Muito baixa"], key="tr8")
-        st.subheader("3. Postura")
-        res_tr["T9"] = st.radio("Postura em sala:", ["Adequada", "Parcialmente", "Inadequada", "Inesperada"], key="tr9")
-        res_tr["T10"] = st.radio("Prazos e tarefas:", ["Regular", "Majoritariamente", "Irregular", "Raramente"], key="tr10")
+        t5 = st.radio("A participação da turma nas atividades propostas é:", ["Ativa e constante", "Regular", "Irregular", "Baixa"], key="tr5")
+        t6 = st.radio("O interesse da turma pelo processo de aprendizagem é:", ["Elevado", "Moderado", "Baixo", "Muito baixo"], key="tr6")
+        t7 = st.radio("Quanto à atenção durante as aulas, a turma:", ["Mantém atenção constante", "Apresenta pequenas dispersões", "Dispersa-se com frequência", "Raramente mantém atenção"], key="tr7")
+        t8 = st.radio("A autonomia da turma na realização das atividades é:", ["Alta", "Média", "Baixa", "Inexistente"], key="tr8")
+        st.subheader("3. Organização")
+        t9 = st.radio("A postura geral da turma em sala de aula é:", ["Adequada", "Parcialmente adequada", "Inadequada em alguns momentos", "Frequentemente inesperada"], key="tr9")
+        t10 = st.radio("O cumprimento de tarefas e prazos pela turma é:", ["Regular e pontual", "Majoritariamente regular", "Irregular", "Raramente cumprido"], key="tr10")
     with col_tr2:
-        res_tr["T11"] = st.radio("Organização material:", ["Adequada", "Parcialmente", "Pouco", "Inadequada"], key="tr11")
-        st.subheader("4. Resultados")
-        res_tr["T12"] = st.radio("Avaliações indicam:", ["Bom domínio", "Parcial", "Baixo", "Insuficiente"], key="tr12")
-        res_tr["T13"] = st.radio("Dificuldade em:", ["Conteúdos pontuais", "Alguns", "Vários", "Generalizada"], key="tr13")
-        res_tr["T14"] = st.radio("Interpretação:", ["Adequada", "Parcial", "Deficiente", "Muito deficiente"], key="tr14")
-        res_tr["T15"] = st.radio("Constância da turma:", ["Constante", "Pequenas oscilações", "Frequentes", "Instável"], key="tr15")
+        t11 = st.radio("A organização de materiais e registros pela turma é:", ["Adequada", "Parcialmente adequada", "Pouco adequada", "Inadequada"], key="tr11")
+        st.subheader("4. Avaliação")
+        t12 = st.radio("Os resultados das avaliações indicam:", ["Bom domínio dos conteúdos", "Domínio parcial", "Baixo domínio", "Domínio insuficiente"], key="tr12")
+        t13 = st.radio("A turma apresenta dificuldades significativas em:", ["Conteúdos pontuais", "Alguns componentes", "Vários componentes", "Dificuldades generalizadas"], key="tr13")
+        t14 = st.radio("Em relação à leitura e interpretação de enunciados, a turma é:", ["Adequada", "Parcialmente adequada", "Deficiente", "Muito deficiente"], key="tr14")
+        t15 = st.radio("O desempenho da turma ao longo do período foi:", ["Constante", "Com pequenas oscilações", "Com oscilações frequentes", "Instável"], key="tr15")
         st.subheader("5. Estratégias")
-        res_tr["T16"] = st.radio("Atendimento necessidades:", ["Sim", "Parcialmente", "Pouco", "Não"], key="tr16")
-        res_tr["T17"] = st.radio("Respondem melhor a:", ["Expositivas", "Práticas", "Grupo", "Mediação"], key="tr17")
-        res_tr["T18"] = st.radio("Replanejamento:", ["Não há", "Pequenos", "Significativos", "Reestruturação"], key="tr18")
-        res_tr["T19"] = st.radio("Recuperação:", ["Não", "Pontuais", "Contínuas", "Intensivas"], key="tr19")
-        res_tr["T20"] = st.radio("Aproveitamento final:", ["Bom", "Satisfatório", "Parcial", "Baixo"], key="tr20")
+        t16 = st.radio("As estratégias pedagógicas atenderam às necessidades da turma?", ["Sim, plenamente", "Sim, parcialmente", "Pouco", "Não atenderam"], key="tr16")
+        t17 = st.radio("A turma responde melhor a:", ["Aulas expositivas", "Atividades práticas/Dinâmicas", "Trabalhos em grupo", "Mediação constante"], key="tr17")
+        t18 = st.radio("Há necessidade de replanejamento para a turma?", ["Não há necessidade", "Apenas ajustes pontuais", "Ajustes significativos", "Reestruturação total"], key="tr18")
+        t19 = st.radio("Ações de recuperação da aprendizagem foram necessárias?", ["Não", "Pontuais", "Contínuas", "Intensivas"], key="tr19")
+        t20 = st.radio("Considerando o conjunto, a turma apresenta:", ["Bom aproveitamento", "Aproveitamento satisfatório", "Aproveitamento parcial", "Baixo aproveitamento"], key="tr20")
 
 # --- BOTÃO DE ENVIO WEB ---
 st.markdown("---")
 if st.button("💾 ENVIAR RESPOSTAS PARA PLANILHA CENTRAL", type="primary", use_container_width=True):
     if not prof:
         st.error("⚠️ Preencha o nome do Professor!")
+    elif not aluno_nome and "al1" in st.session_state:
+         st.error("⚠️ Preencha o nome do Aluno!")
     else:
         try:
-            dados_para_salvar = res_al if aluno_nome else res_tr
+            if aluno_nome:
+                dados = {
+                    "Data": datetime.datetime.now().strftime("%d/%m/%Y"), "Prof": prof, "Turma": turma_sel, "Aluno": aluno_nome,
+                    "O desempenho geral do aluno é:": p1, "Em relação à evolução ao longo do período, o aluno:": p2, "Quanto à compreensão dos conteúdos essenciais, o aluno:": p3, "O ritmo de aprendizagem do aluno é:": p4, "O desempenho do aluno indica:": p5,
+                    "A participação do aluno em sala é:": p6, "O interesse demonstrado pelo aluno é:": p7, "Quanto à atenção durante as aulas, o aluno:": p8, "A autonomia do aluno na realização das atividades é:": p9, "A postura do aluno no ambiente escolar é:": p10,
+                    "O aluno demonstra potencial nas áreas:": p11, "Em relação às orientações dos professores, o aluno:": p12, "O comprometimento com as atividades é:": p13, "O aluno demonstra esforço mesmo diante de dificuldades?": p14, "O aluno apresenta:": p15,
+                    "As dificuldades apresentadas pelo aluno são:": p16, "As principais dificuldades estão relacionadas a:": p17, "Nas avaliações, o aluno:": p18, "Em relação à leitura e interpretação de enunciados:": p19, "O comportamento do aluno:": p20,
+                    "As dificuldades parecem relacionadas a:": p21, "Responde melhor quando:": p22, "O acompanhamento familiar é:": p23, "Demonstra consciência de suas dificuldades?": p24, "Utiliza estratégias próprias para aprender?": p25,
+                    "Estratégias adotadas até o momento:": p26, "O aluno necessita de:": p27, "A recuperação deve ocorrer:": p28, "Recomenda-se:": p29, "Considerando o conjunto, o aluno:": p30
+                }
+            else:
+                dados = {
+                    "Data": datetime.datetime.now().strftime("%d/%m/%Y"), "Prof": prof, "Turma": turma_sel, "Aluno": "COLETIVO",
+                    "Desempenho geral da turma:": t1, "Em relação à evolução ao longo do período letivo, a turma:": t2, "A turma, de modo geral, compreende os conteúdos essenciais?": t3, "O ritmo de aprendizagem da turma é:": t4, "A participação da turma nas atividades propostas é:": t5,
+                    "O interesse da turma pelo processo de aprendizagem é:": t6, "Quanto à atenção durante as aulas, a turma:": t7, "A autonomia da turma na realização das atividades é:": t8, "A postura geral da turma em sala de aula é:": t9, "O cumprimento de tarefas e prazos pela turma é:": t10,
+                    "A organização de materiais e registros pela turma é:": t11, "Os resultados das avaliações indicam:": t12, "A turma apresenta dificuldades significativas em:": t13, "Em relação à leitura e interpretação de enunciados, a turma é:": t14, "O desempenho da turma ao longo do período foi:": t15,
+                    "As estratégias pedagógicas atenderam às necessidades da turma?": t16, "A turma responde melhor a:": t17, "Há necessidade de replanejamento para a turma?": t18, "Ações de recuperação da aprendizagem foram necessárias?": t19, "Considerando o conjunto, a turma apresenta:": t20
+                }
             df_atual = conn.read(spreadsheet=url, ttl=0)
-            df_final = pd.concat([df_atual, pd.DataFrame([dados_para_salvar])], ignore_index=True)
+            df_final = pd.concat([df_atual, pd.DataFrame([dados])], ignore_index=True)
             conn.update(spreadsheet=url, data=df_final)
-            st.success("✅ Gravado com sucesso na nuvem!")
+            st.success("✅ Gravado com sucesso na planilha central!")
             st.balloons()
         except Exception as e:
-            st.error(f"Erro de permissão: {e}. Verifique os Secrets e se o bot é EDITOR na planilha.")
+            st.error(f"Erro ao gravar: {e}")
