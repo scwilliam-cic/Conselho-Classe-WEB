@@ -28,9 +28,8 @@ except:
 conn = st.connection("gsheets", type=GSheetsConnection)
 url_planilha = "https://docs.google.com/spreadsheets/d/1bGcDE5Q-Dz0dhQgeqcHiLSS8WUqc2icvWb4k8SwxAwQ/edit#gid=1477512121"
 
-# --- CONFIGURAÇÃO DO DRIVE ---
-# COLOQUE O ID DA SUA PASTA DO DRIVE ENTRE AS ASPAS ABAIXO:
-PASTA_DESTINO_ID = "ID_DA_SUA_PASTA_AQUI"
+# --- CONFIGURAÇÃO DO DRIVE (JÁ PREENCHIDA PARA VOCÊ) ---
+PASTA_DESTINO_ID = "1ZGdFybd_aPQZyvuPuitVB-JpZKc_nZP-"
 
 st.title("📝 Formulário de Conselho de Classe")
 
@@ -155,7 +154,6 @@ if st.button("🚀 FINALIZAR, SALVAR E GERAR RELATÓRIO", type="primary", use_co
                 'mimeType': 'application/vnd.google-apps.document'
             }
             
-            # Cria o arquivo no Drive
             new_file = drive_service.files().create(body=file_metadata, fields='id, webViewLink').execute()
             
             st.success("🎉 Processo concluído com sucesso!")
