@@ -1,16 +1,5 @@
 streamlit
 pandas
-openpyxl
-st-gsheets-connection
-google-generativeai
-google-api-python-client
-google-auth-oauthlib
-google-auth-httplib2
-streamlit-gsheets
-
-
-streamlit
-pandas
 google-generativeai
 google-api-python-client
 google-auth
