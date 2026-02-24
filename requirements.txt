@@ -1,5 +1,6 @@
-﻿streamlit
+streamlit
 pandas
 openpyxl
 st-gsheets-connection
-
+google-generativeai
+google-api-python-client
