@@ -9,12 +9,15 @@ from google.oauth2.service_account import Credentials
 # 1. CONFIGURAÇÕES DA PÁGINA
 st.set_page_config(page_title="Conselho de Classe Imaculada", layout="wide", page_icon="📝")
 
-# --- FUNÇÕES DE CONEXÃO (EVITA TRAVAMENTOS) ---
+# --- FUNÇÕES DE CONEXÃO (COM CORREÇÃO DO MODELO GEMINI) ---
 @st.cache_resource
 def configurar_ia():
     try:
-        genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-        return genai.GenerativeModel('gemini-1.5-flash')
+        # Pega a chave dos Secrets
+        api_key = st.secrets["GOOGLE_API_KEY"]
+        genai.configure(api_key=api_key)
+        # Usando a versão -latest para evitar erro 404
+        return genai.GenerativeModel('gemini-1.5-flash-latest')
     except Exception as e:
         st.error(f"Erro ao configurar IA: {e}")
         return None
@@ -148,21 +151,30 @@ if st.button("🚀 FINALIZAR E GERAR RELATÓRIO", type="primary", use_container_
 
             # 2. GERAR TEXTO COM IA
             with st.spinner("🤖 IA redigindo relatório..."):
-                prompt = f"Relatório pedagógico. Aluno: {aluno_nome}. Desempenho: {p1}. Dificuldade: {p16}. Contexto: {coment_aluno}. Seja formal."
+                prompt = (f"Como orientador pedagógico, redija um relatório formal para o aluno {aluno_nome if aluno_nome else 'da turma'}. "
+                         f"Turma: {turma_sel}. Professor: {prof}. "
+                         f"Dados: Desempenho {p1 if aluno_nome else t1}, Evolução {p2 if aluno_nome else t2}. "
+                         f"Considerações do professor: {coment_aluno if aluno_nome else coment_turma}. "
+                         "O texto deve ser profissional, acolhedor e focado no desenvolvimento do estudante.")
+                
                 response = model.generate_content(prompt)
                 texto_ia = response.text
 
-            # 3. CRIAR GOOGLE DOCS
+            # 3. CRIAR GOOGLE DOCS NO DRIVE
             file_metadata = {
-                'name': f'Relatório {aluno_nome if aluno_nome else turma_sel}',
+                'name': f'Relatório {aluno_nome if aluno_nome else turma_sel} - {datetime.datetime.now().strftime("%d-%m")}',
                 'parents': [PASTA_DESTINO_ID],
                 'mimeType': 'application/vnd.google-apps.document'
             }
+            
+            # Criação do arquivo vazio com metadados
             res = drive_service.files().create(body=file_metadata, fields='id, webViewLink').execute()
             
-            st.success("🎉 Concluído!")
-            st.link_button("📂 Abrir no Google Docs", res.get('webViewLink'))
-            st.markdown("### Prévia:")
+            st.success("🎉 Processo concluído com sucesso!")
+            st.link_button("📂 Abrir Relatório no Google Docs", res.get('webViewLink'))
+            
+            st.markdown("---")
+            st.subheader("📄 Prévia do Relatório Gerado:")
             st.write(texto_ia)
 
         except Exception as e:
