@@ -9,30 +9,35 @@ from google.oauth2.service_account import Credentials
 # 1. CONFIGURAÇÕES DA PÁGINA
 st.set_page_config(page_title="Conselho de Classe Imaculada", layout="wide", page_icon="📝")
 
-# --- FUNÇÕES DE CONEXÃO E IA (CORREÇÃO DO ERRO 404) ---
+# --- FUNÇÕES DE CONEXÃO COM DEBUG AVANÇADO ---
 @st.cache_resource
 def configurar_ia():
-    """
-    Tenta instanciar o modelo usando nomes estáveis. 
-    Se o 1.5-flash falhar, ele tenta as versões pro ou estáveis.
-    """
     try:
         api_key = st.secrets["GOOGLE_API_KEY"]
         genai.configure(api_key=api_key)
         
-        # Lista de modelos por ordem de prioridade técnica
-        # Removendo o prefixo 'models/' que causa o erro 404 em certas versões do SDK
-        modelos_tentar = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
+        # LOGICA DE BUSCA AUTÔNOMA (ListModels)
+        # Em vez de fixar um nome, vamos listar o que sua chave permite usar
+        modelos_disponiveis = []
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                modelos_disponiveis.append(m.name)
         
-        for nome in modelos_tentar:
-            try:
-                model_inst = genai.GenerativeModel(nome)
-                return model_inst
-            except:
-                continue
-        return None
+        # Prioridade de escolha baseada na existência real na sua conta
+        selecionado = None
+        for alvo in ['models/gemini-1.5-flash', 'models/gemini-1.5-pro', 'models/gemini-pro']:
+            if alvo in modelos_disponiveis:
+                selecionado = alvo
+                break
+        
+        if selecionado:
+            return genai.GenerativeModel(selecionado)
+        else:
+            st.error("Nenhum modelo compatível encontrado. Verifique se a Generative Language API está ativa no seu Google Cloud.")
+            return None
+            
     except Exception as e:
-        st.error(f"Erro na configuração da IA: {e}")
+        st.error(f"Erro de Conexão/Autenticação: {e}")
         return None
 
 @st.cache_resource
@@ -45,15 +50,15 @@ def configurar_drive():
         )
         return build('drive', 'v3', credentials=credentials)
     except Exception as e:
-        st.error(f"Erro ao configurar Google Drive: {e}")
+        st.error(f"Erro Drive: {e}")
         return None
 
-# Inicializa serviços
+# Inicialização
 model = configurar_ia()
 drive_service = configurar_drive()
 conn = st.connection("gsheets", type=GSheetsConnection)
 
-# Variáveis Globais
+# Configurações de destino
 url_planilha = "https://docs.google.com/spreadsheets/d/1bGcDE5Q-Dz0dhQgeqcHiLSS8WUqc2icvWb4k8SwxAwQ/edit#gid=1477512121"
 PASTA_DESTINO_ID = "1ZGdFybd_aPQZyvuPuitVB-JpZKc_nZP-"
 
@@ -82,39 +87,39 @@ with tab1:
         p7 = st.radio("7. Interesse:", ["Elevado", "Moderado", "Baixo", "Muito baixo"], key="al7")
         p8 = st.radio("8. Atenção:", ["Constante", "Pequenas dispersões", "Frequente", "Rara"], key="al8")
         p9 = st.radio("9. Autonomia:", ["Alta", "Média", "Baixa", "Inexistente"], key="al9")
-        p10 = st.radio("10. Postura escolar:", ["Adequada", "Parcial", "Inadequada as vezes", "Sempre inadequada"], key="al10")
-        p11 = st.radio("11. Potencial em:", ["Linguagem", "Lógica/Matemática", "Criatividade", "Sem destaque"], key="al11")
-        p12 = st.radio("12. Orientações prof:", ["Assimila e aplica", "Assimila parcialmente", "Dificuldade", "Não assimila"], key="al12")
+        p10 = st.radio("10. Postura escolar:", ["Adequada", "Parcialmente", "Inadequada as vezes", "Frequentemente inadequada"], key="al10")
+        p11 = st.radio("11. Potencial:", ["Linguagem", "Lógica/Matemática", "Criatividade", "Sem destaque"], key="al11")
+        p12 = st.radio("12. Orientações:", ["Assimila e aplica", "Assimila parcialmente", "Dificuldade", "Não assimila"], key="al12")
         p13 = st.radio("13. Comprometimento:", ["Alto", "Moderado", "Baixo", "Muito baixo"], key="al13")
-        p14 = st.radio("14. Esforço em dificuldades:", ["Sempre", "Frequentemente", "Raramente", "Nunca"], key="al14")
+        p14 = st.radio("14. Esforço:", ["Sempre", "Frequentemente", "Raramente", "Nunca"], key="al14")
         p15 = st.radio("15. Constância:", ["Constante", "Oscilações leves", "Frequentes", "Instável"], key="al15")
     with col_al2:
-        p16 = st.radio("16. Dificuldades:", ["Pontuais", "Alguns componentes", "Vários", "Generalizadas"], key="al16")
-        p17 = st.radio("17. Causa:", ["Conteúdo", "Interpretação", "Organização", "Múltiplos fatores"], key="al17")
-        p18 = st.radio("18. Avaliações:", ["Domínio", "Compreensão parcial", "Insegurança", "Aleatório"], key="al18")
+        p16 = st.radio("16. Dificuldades:", ["Pontuais", "Em alguns componentes", "Vários", "Generalizadas"], key="al16")
+        p17 = st.radio("17. Causa dificuldades:", ["Conteúdo", "Interpretação", "Organização", "Múltiplos fatores"], key="al17")
+        p18 = st.radio("18. Nas avaliações:", ["Domínio", "Compreensão parcial", "Insegurança", "Aleatório"], key="al18")
         p19 = st.radio("19. Leitura/Enunciados:", ["Sem dificuldades", "Pequenas", "Frequentes", "Grandes"], key="al19")
         p20 = st.radio("20. Comportamento interfere?", ["Não", "Ocasionalmente", "Com frequência", "Significativamente"], key="al20")
         p21 = st.radio("21. Relacionado a:", ["Defasagem", "Falta estudo", "Concentração", "Conjunto de fatores"], key="al21")
         p22 = st.radio("22. Responde melhor:", ["Autônomo", "Com mediação", "Em grupo", "Individual"], key="al22")
-        p23 = st.radio("23. Família:", ["Presente", "Irregular", "Pouco presente", "Inexistente"], key="al23")
-        p24 = st.radio("24. Consciência:", ["Sim", "Parcial", "Pouco", "Não"], key="al24")
-        p25 = st.radio("25. Estratégias próprias:", ["Sim", "Às vezes", "Raramente", "Não utiliza"], key="al25")
-        p26 = st.radio("26. Pedagógico:", ["Eficazes", "Parciais", "Pouco eficazes", "Sem efeito"], key="al26")
-        p27 = st.radio("27. Necessita de:", ["Acomp. regular", "Reforço pontual", "Reforço contínuo", "Individualizado"], key="al27")
-        p28 = st.radio("28. Recuperação em:", ["Sala", "Extra", "Específico", "Várias frentes"], key="al28")
+        p23 = st.radio("23. Família:", ["Presente", "Irregular", "Ausente", "Inexistente"], key="al23")
+        p24 = st.radio("24. Consciência dificuldades:", ["Sim", "Parcial", "Pouco", "Não"], key="al24")
+        p25 = st.radio("25. Estratégias próprias:", ["Sim", "Às vezes", "Raramente", "Não"], key="al25")
+        p26 = st.radio("26. Pedagógico:", ["Eficazes", "Parciais", "Ineficazes", "Sem efeito"], key="al26")
+        p27 = st.radio("27. Necessita de:", ["Regular", "Reforço", "Contínuo", "Individualizado"], key="al27")
+        p28 = st.radio("28. Recuperação em:", ["Sala", "Extra", "Específico", "Múltiplos"], key="al28")
         p29 = st.radio("29. Recomenda-se:", ["Manutenção", "Ajustes", "Reestruturação", "Plano individual"], key="al29")
-        p30 = st.radio("30. Aproveitamento:", ["Bom", "Parcial", "Baixo", "Intervenção intensiva"], key="al30")
+        p30 = st.radio("30. Aproveitamento:", ["Bom", "Parcial", "Baixo", "Intensivo"], key="al30")
     coment_aluno = st.text_area("💬 CONSIDERAÇÕES FINAIS (Individual):", key="cal")
 
 # --- ABA 2: TURMA (20 PERGUNTAS) ---
 with tab2:
     col_tr1, col_tr2 = st.columns(2)
     with col_tr1:
-        t1 = st.radio("1. Desempenho geral:", ["Satisfatório", "Parcial", "Insatisfatório"], key="t1")
-        t2 = st.radio("2. Evolução letiva:", ["Significativa", "Gradual", "Pouca"], key="t2")
-        t3 = st.radio("3. Conteúdos:", ["Sim", "Dificuldades", "Não"], key="t3")
+        t1 = st.radio("1. Desempenho turma:", ["Muito satisfatório", "Satisfatório", "Parcial", "Insatisfatório"], key="t1")
+        t2 = st.radio("2. Evolução letiva:", ["Significativa", "Gradual", "Pouca", "Nenhuma"], key="t2")
+        t3 = st.radio("3. Conteúdos:", ["Sim", "Dificuldades", "Parcial", "Grandes"], key="t3")
         t4 = st.radio("4. Ritmo:", ["Adequado", "Abaixo", "Muito abaixo"], key="t4")
-        t5 = st.radio("5. Participação:", ["Ativa", "Regular", "Baixa"], key="t5")
+        t5 = st.radio("5. Participação:", ["Ativa", "Regular", "Irregular", "Baixa"], key="t5")
         t6 = st.radio("6. Interesse:", ["Elevado", "Moderado", "Baixo"], key="t6")
         t7 = st.radio("7. Atenção:", ["Constante", "Dispersa", "Rara"], key="t7")
         t8 = st.radio("8. Autonomia:", ["Alta", "Média", "Baixa"], key="t8")
@@ -122,66 +127,43 @@ with tab2:
         t10 = st.radio("10. Prazos:", ["Regular", "Majoritariamente", "Raramente"], key="t10")
     with col_tr2:
         t11 = st.radio("11. Organização:", ["Adequada", "Parcial", "Inadequada"], key="t11")
-        t12 = st.radio("12. Resultados Avaliações:", ["Bons", "Parciais", "Baixos"], key="t12")
-        t13 = st.radio("13. Dificuldades em:", ["Pontuais", "Vários", "Generalizadas"], key="t13")
+        t12 = st.radio("12. Resultados:", ["Bons", "Parciais", "Baixos"], key="t12")
+        t13 = st.radio("13. Dificuldades:", ["Pontuais", "Vários", "Generalizadas"], key="t13")
         t14 = st.radio("14. Leitura:", ["Adequada", "Deficiente", "Muito deficiente"], key="t14")
-        t15 = st.radio("15. Desempenho:", ["Constante", "Oscilante", "Instável"], key="t15")
-        t16 = st.radio("16. Estratégias:", ["Sim", "Parcialmente", "Não"], key="t16")
-        t17 = st.radio("17. Melhor resposta:", ["Expositivas", "Práticas", "Grupo"], key="t17")
+        t15 = st.radio("15. Desempenho Período:", ["Constante", "Oscilante", "Instável"], key="t15")
+        t16 = st.radio("16. Estratégias Eficazes?", ["Sim", "Parcialmente", "Não"], key="t16")
+        t17 = st.radio("17. Resposta a:", ["Expositivas", "Práticas", "Grupo"], key="t17")
         t18 = st.radio("18. Replanejamento:", ["Não", "Ajustes", "Total"], key="t18")
         t19 = st.radio("19. Recuperação:", ["Não", "Pontuais", "Intensivas"], key="t19")
         t20 = st.radio("20. Aproveitamento:", ["Bom", "Satisfatório", "Baixo"], key="t20")
     coment_turma = st.text_area("💬 CONSIDERAÇÕES FINAIS (Turma):", key="ctr")
 
-# --- ABA 3: MATRÍCULAS ---
-with tab3:
-    try:
-        df_mat = conn.read(spreadsheet=url_planilha, worksheet="Matriculas", ttl=0)
-        st.dataframe(df_mat, use_container_width=True, hide_index=True)
-    except:
-        st.info("Aguardando carregamento da aba 'Matriculas'...")
-
 # --- BOTÃO FINAL ---
 if st.button("🚀 FINALIZAR E GERAR RELATÓRIO", type="primary", use_container_width=True):
     if not prof:
-        st.warning("Por favor, preencha o nome do professor.")
+        st.warning("Preencha o nome do professor.")
     elif not model:
-        st.error("Serviço de IA não disponível. Verifique sua chave API.")
+        st.error("IA não configurada. Verifique os segredos do Streamlit.")
     else:
         try:
-            # 1. SALVAR NO SHEETS
-            nova_linha = pd.DataFrame([{
-                "Data": datetime.datetime.now().strftime("%d/%m/%Y"), 
-                "Prof": prof, "Turma": turma_sel, 
-                "Aluno": aluno_nome if aluno_nome else "TURMA"
-            }])
+            # 1. PLANILHA
+            nova_linha = pd.DataFrame([{"Data": datetime.datetime.now().strftime("%d/%m/%Y %H:%M"), "Prof": prof, "Turma": turma_sel, "Aluno": aluno_nome if aluno_nome else "TURMA"}])
             df_atual = conn.read(spreadsheet=url_planilha, ttl=0)
             df_final = pd.concat([df_atual, nova_linha], ignore_index=True)
             conn.update(spreadsheet=url_planilha, data=df_final)
-            st.toast("✅ Planilha atualizada!")
-
-            # 2. GERAR TEXTO COM IA
-            with st.spinner("🤖 IA redigindo relatório..."):
-                prompt = f"""
-                Escreva um relatório pedagógico formal.
-                Professor: {prof} | Turma: {turma_sel} | Aluno: {aluno_nome if aluno_nome else 'Análise Coletiva'}
-                Dados: Desempenho {p1 if aluno_nome else t1}, Participação {p6 if aluno_nome else t5}.
-                Comentário: {coment_aluno if aluno_nome else coment_turma}
-                """
+            
+            # 2. IA
+            with st.spinner("🤖 Gerando texto..."):
+                prompt = f"Relatório Pedagógico Profissional. Professor: {prof}. Sujeito: {aluno_nome if aluno_nome else 'Turma '+turma_sel}. Dados: {p1 if aluno_nome else t1}. Observação: {coment_aluno if aluno_nome else coment_turma}."
                 response = model.generate_content(prompt)
                 texto_ia = response.text
 
-            # 3. CRIAR GOOGLE DOCS
-            file_metadata = {
-                'name': f'Relatório {aluno_nome if aluno_nome else turma_sel} - {datetime.datetime.now().strftime("%H:%M")}',
-                'parents': [PASTA_DESTINO_ID],
-                'mimeType': 'application/vnd.google-apps.document'
-            }
-            res = drive_service.files().create(body=file_metadata, fields='id, webViewLink').execute()
+            # 3. GOOGLE DOCS
+            meta = {'name': f'Relatório {aluno_nome or turma_sel}', 'parents': [PASTA_DESTINO_ID], 'mimeType': 'application/vnd.google-apps.document'}
+            res = drive_service.files().create(body=meta, fields='id, webViewLink').execute()
             
-            st.success("🎉 Processo concluído com sucesso!")
+            st.success("🎉 Criado no Google Drive!")
             st.link_button("📂 Abrir no Google Docs", res.get('webViewLink'))
-            st.info(texto_ia)
-
+            st.write(texto_ia)
         except Exception as e:
-            st.error(f"Erro no processamento: {e}")
+            st.error(f"Erro: {e}")
