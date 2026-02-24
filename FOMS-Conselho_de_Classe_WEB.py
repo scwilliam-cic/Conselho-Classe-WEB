@@ -6,172 +6,164 @@ from streamlit_gsheets import GSheetsConnection
 from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
 
-# =========================================================
-# CONFIGURAÇÃO DA PÁGINA
-# =========================================================
-st.set_page_config(
-    page_title="Sistema Oficial de Conselho de Classe",
-    layout="wide",
-    page_icon="📝"
-)
+# 1. CONFIGURAÇÕES DA PÁGINA
+st.set_page_config(page_title="Conselho de Classe Imaculada", layout="wide", page_icon="📝")
 
-st.title("📝 Sistema Oficial de Conselho de Classe")
-
-# =========================================================
-# CONFIGURAÇÃO GEMINI
-# =========================================================
+# --- FUNÇÕES DE CONEXÃO (EVITA TRAVAMENTOS) ---
 @st.cache_resource
 def configurar_ia():
-    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-    return genai.GenerativeModel("gemini-1.5-flash")
+    try:
+        genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+        return genai.GenerativeModel('gemini-1.5-flash')
+    except Exception as e:
+        st.error(f"Erro ao configurar IA: {e}")
+        return None
 
-# =========================================================
-# CONFIGURAÇÃO GOOGLE DRIVE + DOCS
-# =========================================================
 @st.cache_resource
-def configurar_google():
-    creds_info = st.secrets["connections"]["gsheets"]
+def configurar_drive():
+    try:
+        creds_info = st.secrets["connections"]["gsheets"]
+        credentials = Credentials.from_service_account_info(
+            creds_info, 
+            scopes=["https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/documents"]
+        )
+        return build('drive', 'v3', credentials=credentials)
+    except Exception as e:
+        st.error(f"Erro ao configurar Google Drive: {e}")
+        return None
 
-    credentials = Credentials.from_service_account_info(
-        creds_info,
-        scopes=[
-            "https://www.googleapis.com/auth/drive",
-            "https://www.googleapis.com/auth/documents"
-        ]
-    )
-
-    drive = build("drive", "v3", credentials=credentials)
-    docs = build("docs", "v1", credentials=credentials)
-
-    return drive, docs
-
+# Inicializa serviços
 model = configurar_ia()
-drive_service, docs_service = configurar_google()
+drive_service = configurar_drive()
+
+# Conexão Sheets
 conn = st.connection("gsheets", type=GSheetsConnection)
+url_planilha = "https://docs.google.com/spreadsheets/d/1bGcDE5Q-Dz0dhQgeqcHiLSS8WUqc2icvWb4k8SwxAwQ/edit#gid=1477512121"
 
-# 🔴 CONFIGURE AQUI
-url_planilha = "SUA_URL_DA_PLANILHA"
-PASTA_DESTINO_ID = "SEU_ID_DA_PASTA_DRIVE"
+# ID DA SUA PASTA (JÁ CONFIGURADO)
+PASTA_DESTINO_ID = "1ZGdFybd_aPQZyvuPuitVB-JpZKc_nZP-"
 
-# =========================================================
-# IDENTIFICAÇÃO
-# =========================================================
-col1, col2 = st.columns(2)
+st.title("📝 Formulário de Conselho de Classe")
 
-with col1:
-    professor = st.text_input("Nome do Professor(a)")
+# --- IDENTIFICAÇÃO ---
+c1, c2 = st.columns(2)
+with c1: 
+    prof = st.text_input("👤 Nome do Professor(a)")
+with c2: 
+    turma_sel = st.selectbox("🏫 Turma", ["1º Ano A", "2º Ano A", "3º Ano A", "4º Ano A", "5º Ano A"])
 
-with col2:
-    turma = st.selectbox(
-        "Turma",
-        ["1º Ano A", "2º Ano A", "3º Ano A", "4º Ano A", "5º Ano A"]
-    )
+tab1, tab2, tab3 = st.tabs(["🎓 Avaliação Aluno", "👥 Avaliação Turma", "📋 Consulta de Matrículas"])
 
-tab1, tab2 = st.tabs(["Avaliação do Aluno", "Avaliação da Turma"])
-
-# =========================================================
-# AVALIAÇÃO DO ALUNO
-# =========================================================
+# --- ABA 1: ALUNO (30 PERGUNTAS) ---
 with tab1:
-    aluno = st.text_input("Nome do Aluno")
+    aluno_nome = st.text_input("🎓 Nome do Aluno")
+    col_al1, col_al2 = st.columns(2)
+    with col_al1:
+        p1 = st.radio("1. O desempenho geral do aluno é:", ["Totalmente compatível", "Parcialmente compatível", "Abaixo do esperado", "Muito abaixo do esperado"], key="al1")
+        p2 = st.radio("2. Evolução ao longo do período:", ["Significativa", "Gradual", "Pouca", "Não apresentou evolução"], key="al2")
+        p3 = st.radio("3. Compreensão dos conteúdos essenciais:", ["Compreende plenamente", "Compreende com pequenas dificuldades", "Compreende parcialmente", "Apresenta grandes dificuldades"], key="al3")
+        p4 = st.radio("4. O ritmo de aprendizagem do aluno é:", ["Adequado", "Um pouco abaixo", "Abaixo do esperado", "Muito abaixo"], key="al4")
+        p5 = st.radio("5. O desempenho do aluno indica:", ["Domínio dos objetivos", "Atendimento parcial", "Atendimento mínimo", "Não atendimento"], key="al5")
+        p6 = st.radio("6. A participação do aluno em sala é:", ["Frequente e ativa", "Regular", "Eventual", "Rara"], key="al6")
+        p7 = st.radio("7. O interesse demonstrado pelo aluno é:", ["Elevado", "Moderado", "Baixo", "Muito baixo"], key="al7")
+        p8 = st.radio("8. Quanto à atenção durante as aulas, o aluno:", ["Mantém atenção constante", "Pequenas dispersões", "Dispersa-se com frequência", "Raramente mantém atenção"], key="al8")
+        p9 = st.radio("9. A autonomia do aluno na realização das atividades:", ["Alta", "Média", "Baixa", "Inexistente"], key="al9")
+        p10 = st.radio("10. A postura do aluno no ambiente escolar é:", ["Adequada", "Parcialmente adequada", "Inadequada as vezes", "Frequentemente inadequada"], key="al10")
+        p11 = st.radio("11. O aluno demonstra potencial nas áreas:", ["Linguagem e comunicação", "Raciocínio lógico/matemático", "Criatividade", "Ainda não apresenta destaque"], key="al11")
+        p12 = st.radio("12. Em relação às orientações dos professores, o aluno:", ["Assimila e aplica", "Assimila parcialmente", "Dificuldade em aplicar", "Não demonstra assimilação"], key="al12")
+        p13 = st.radio("13. O comprometimento com as atividades é:", ["Alto", "Moderado", "Baixo", "Muito baixo"], key="al13")
+        p14 = st.radio("14. O aluno demonstra esforço mesmo diante de dificuldades?", ["Sempre", "Frequentemente", "Raramente", "Nunca"], key="al14")
+        p15 = st.radio("15. O aluno apresenta:", ["Constância no desempenho", "Oscilações leves", "Oscilações frequentes", "Desempenho instável"], key="al15")
+    with col_al2:
+        p16 = st.radio("16. As dificuldades apresentadas pelo aluno são:", ["Pontuais", "Em alguns componentes", "Em vários componentes", "Generalizadas"], key="al16")
+        p17 = st.radio("17. As principais dificuldades estão relacionadas a:", ["Conteúdo específico", "Interpretação e compreensão", "Organização e atenção", "Múltiplos fatores"], key="al17")
+        p18 = st.radio("18. Nas avaliações, o aluno:", ["Demonstra domínio", "Demonstra compreensão parcial", "Demonstra insegurança", "Responde de forma aleatória"], key="al18")
+        p19 = st.radio("19. Em relação à leitura e interpretação de enunciados:", ["Não apresenta dificuldades", "Apresenta pequenas dificuldades", "Dificuldades frequentes", "Grandes dificuldades"], key="al19")
+        p20 = st.radio("20. O comportamento do aluno:", ["Não interfere no aprendizado", "Interfere ocasionalmente", "Interfere com frequência", "Compromete significativamente"], key="al20")
+        p21 = st.radio("21. As dificuldades parecem estar relacionadas a:", ["Defasagem anterior", "Falta de estudo", "Concentração", "Conjunto de fatores"], key="al21")
+        p22 = st.radio("22. O aluno responde melhor quando:", ["Trabalha autônomo", "Recebe mediação", "Trabalha em grupo", "Acompanhamento individual"], key="al22")
+        p23 = st.radio("23. O acompanhamento familiar é:", ["Presente e efetivo", "Presente, porém irregular", "Pouco presente", "Inexistente"], key="al23")
+        p24 = st.radio("24. O aluno demonstra consciência de suas dificuldades?", ["Sim, claramente", "Parcialmente", "Pouco", "Não demonstra"], key="al24")
+        p25 = st.radio("25. O aluno utiliza estratégias próprias para aprender?", ["Sim, com autonomia", "Às vezes", "Raramente", "Não utiliza"], key="al25")
+        p26 = st.radio("26. As estratégias pedagógicas adotadas até o momento:", ["Eficazes", "Parcialmente eficazes", "Pouco eficazes", "Sem efeito"], key="al26")
+        p27 = st.radio("27. O aluno necessita de:", ["Acompanhamento regular", "Reforço pontual", "Reforço contínuo", "Acompanhamento individualizado"], key="al27")
+        p28 = st.radio("28. A recuperação da aprendizagem deve ocorrer:", ["Em sala", "Atividades complementares", "Atendimento específico", "Múltiplas frentes"], key="al28")
+        p29 = st.radio("29. Recomenda-se:", ["Manutenção atual", "Ajustes pontuais", "Reestruturação", "Plano individual"], key="al29")
+        p30 = st.radio("30. Considerando o conjunto, o aluno apresenta:", ["Bom aproveitamento", "Aproveitamento parcial", "Baixo aproveitamento", "Intervenção intensiva"], key="al30")
+    coment_aluno = st.text_area("💬 CONSIDERAÇÕES FINAIS (Individual):", key="cal")
 
-    opcoes = ["Excelente", "Bom", "Regular", "Insatisfatório"]
-
-    respostas_aluno = {}
-
-    respostas_aluno["O desempenho geral do aluno é"] = st.selectbox("1. O desempenho geral do aluno é:", opcoes)
-    respostas_aluno["Em relação à evolução ao longo do período, o aluno"] = st.selectbox("2. Em relação à evolução ao longo do período, o aluno:", ["Significativa", "Gradual", "Pouca", "Nenhuma"])
-    respostas_aluno["Quanto à compreensão dos conteúdos essenciais, o aluno"] = st.selectbox("3. Quanto à compreensão dos conteúdos essenciais, o aluno:", opcoes)
-    respostas_aluno["O ritmo de aprendizagem do aluno é"] = st.selectbox("4. O ritmo de aprendizagem do aluno é:", ["Rápido", "Adequado", "Lento"])
-    respostas_aluno["A participação do aluno em sala é"] = st.selectbox("5. A participação do aluno em sala é:", opcoes)
-    respostas_aluno["O interesse demonstrado pelo aluno é"] = st.selectbox("6. O interesse demonstrado pelo aluno é:", opcoes)
-    respostas_aluno["Quanto à atenção durante as aulas, o aluno"] = st.selectbox("7. Quanto à atenção durante as aulas, o aluno:", opcoes)
-    respostas_aluno["A autonomia na realização das atividades é"] = st.selectbox("8. A autonomia na realização das atividades é:", opcoes)
-    respostas_aluno["A postura e comportamento são"] = st.selectbox("9. A postura e comportamento são:", ["Adequados", "Precisam melhorar"])
-    respostas_aluno["A organização do aluno é"] = st.selectbox("10. A organização do aluno é:", opcoes)
-    respostas_aluno["A responsabilidade com prazos é"] = st.selectbox("11. A responsabilidade com prazos é:", opcoes)
-    respostas_aluno["O relacionamento com colegas é"] = st.selectbox("12. O relacionamento com colegas é:", opcoes)
-    respostas_aluno["O relacionamento com o professor é"] = st.selectbox("13. O relacionamento com o professor é:", opcoes)
-    respostas_aluno["A comunicação oral é"] = st.selectbox("14. A comunicação oral é:", opcoes)
-    respostas_aluno["A produção escrita é"] = st.selectbox("15. A produção escrita é:", opcoes)
-    respostas_aluno["A capacidade de interpretação é"] = st.selectbox("16. A capacidade de interpretação é:", opcoes)
-    respostas_aluno["A resolução de problemas é"] = st.selectbox("17. A resolução de problemas é:", opcoes)
-    respostas_aluno["O comprometimento com os estudos é"] = st.selectbox("18. O comprometimento com os estudos é:", opcoes)
-    respostas_aluno["A frequência é"] = st.selectbox("19. A frequência é:", ["Excelente", "Boa", "Regular", "Baixa"])
-    respostas_aluno["A pontualidade é"] = st.selectbox("20. A pontualidade é:", ["Sempre pontual", "Às vezes", "Frequentemente atrasado"])
-
-    respostas_aluno["As principais dificuldades estão relacionadas a"] = st.selectbox(
-        "21. As principais dificuldades estão relacionadas a:",
-        ["Conteúdo específico", "Interpretação e compreensão", "Organização e atenção", "Defasagem anterior", "Múltiplos fatores", "Não apresenta dificuldades"]
-    )
-
-    respostas_aluno["Necessita acompanhamento pedagógico"] = st.selectbox("22. Necessita acompanhamento pedagógico?", ["Sim", "Não"])
-    respostas_aluno["Necessita intervenção específica"] = st.selectbox("23. Necessita intervenção específica?", ["Sim", "Não"])
-    respostas_aluno["Apresenta potencial de melhoria"] = st.selectbox("24. Apresenta potencial de melhoria?", ["Sim", "Não"])
-    respostas_aluno["Demonstra protagonismo"] = st.selectbox("25. Demonstra protagonismo?", ["Sim", "Não"])
-    respostas_aluno["Demonstra habilidades socioemocionais adequadas"] = st.selectbox("26. Demonstra habilidades socioemocionais adequadas?", ["Sim", "Não"])
-
-    comentario_aluno = st.text_area("27. Considerações finais do professor")
-
-# =========================================================
-# AVALIAÇÃO DA TURMA
-# =========================================================
+# --- ABA 2: TURMA (20 PERGUNTAS) ---
 with tab2:
-    opcoes = ["Excelente", "Bom", "Regular", "Insatisfatório"]
+    col_tr1, col_tr2 = st.columns(2)
+    with col_tr1:
+        t1 = st.radio("1. Desempenho geral da turma:", ["Muito satisfatório", "Satisfatório", "Parcialmente", "Insatisfatório"], key="t1")
+        t2 = st.radio("2. Evolução letiva:", ["Significativa", "Gradual", "Pouca", "Nenhuma"], key="t2")
+        t3 = st.radio("3. Compreensão de conteúdos?", ["Sim", "Pequenas dificuldades", "Parcialmente", "Grandes dificuldades"], key="t3")
+        t4 = st.radio("4. Ritmo da turma:", ["Adequado", "Abaixo", "Muito abaixo"], key="t4")
+        t5 = st.radio("5. Participação:", ["Ativa", "Regular", "Irregular", "Baixa"], key="t5")
+        t6 = st.radio("6. Interesse:", ["Elevado", "Moderado", "Baixo"], key="t6")
+        t7 = st.radio("7. Atenção:", ["Constante", "Dispersa", "Rara"], key="t7")
+        t8 = st.radio("8. Autonomia:", ["Alta", "Média", "Baixa"], key="t8")
+        t9 = st.radio("9. Postura:", ["Adequada", "Parcial", "Inadequada"], key="t9")
+        t10 = st.radio("10. Prazos:", ["Regular", "Majoritariamente", "Raramente"], key="t10")
+    with col_tr2:
+        t11 = st.radio("11. Organização:", ["Adequada", "Parcial", "Inadequada"], key="t11")
+        t12 = st.radio("12. Resultados Avaliações:", ["Bons", "Parciais", "Baixos"], key="t12")
+        t13 = st.radio("13. Dificuldades em:", ["Pontuais", "Vários", "Generalizadas"], key="t13")
+        t14 = st.radio("14. Leitura/Interpretação:", ["Adequada", "Deficiente", "Muito deficiente"], key="t14")
+        t15 = st.radio("15. Desempenho Período:", ["Constante", "Oscilante", "Instável"], key="t15")
+        t16 = st.radio("16. Estratégias Eficazes?", ["Sim", "Parcialmente", "Não"], key="t16")
+        t17 = st.radio("17. Responde melhor a:", ["Expositivas", "Práticas", "Grupo"], key="t17")
+        t18 = st.radio("18. Replanejamento:", ["Não", "Ajustes", "Total"], key="t18")
+        t19 = st.radio("19. Recuperação:", ["Não", "Pontuais", "Intensivas"], key="t19")
+        t20 = st.radio("20. Aproveitamento Conjunto:", ["Bom", "Satisfatório", "Baixo"], key="t20")
+    coment_turma = st.text_area("💬 CONSIDERAÇÕES FINAIS (Turma):", key="ctr")
 
-    respostas_turma = {}
+# --- ABA 3: MATRÍCULAS ---
+with tab3:
+    try:
+        df_mat = conn.read(spreadsheet=url_planilha, worksheet="Matriculas", ttl=0)
+        st.dataframe(df_mat, use_container_width=True, hide_index=True)
+    except:
+        st.info("Aguardando carregamento da aba 'Matriculas'...")
 
-    respostas_turma["O desempenho geral da turma é"] = st.selectbox("1. O desempenho geral da turma é:", opcoes)
-    respostas_turma["O nível de engajamento da turma é"] = st.selectbox("2. O nível de engajamento da turma é:", opcoes)
-    respostas_turma["A disciplina coletiva é"] = st.selectbox("3. A disciplina coletiva é:", opcoes)
-    respostas_turma["O rendimento acadêmico médio é"] = st.selectbox("4. O rendimento acadêmico médio é:", opcoes)
-    respostas_turma["A participação nas aulas é"] = st.selectbox("5. A participação nas aulas é:", opcoes)
-    respostas_turma["O interesse pelos conteúdos é"] = st.selectbox("6. O interesse pelos conteúdos é:", opcoes)
-    respostas_turma["A organização coletiva é"] = st.selectbox("7. A organização coletiva é:", opcoes)
-    respostas_turma["O cumprimento de prazos é"] = st.selectbox("8. O cumprimento de prazos é:", opcoes)
-    respostas_turma["O relacionamento entre os alunos é"] = st.selectbox("9. O relacionamento entre os alunos é:", opcoes)
-    respostas_turma["O respeito às normas institucionais é"] = st.selectbox("10. O respeito às normas institucionais é:", opcoes)
-    respostas_turma["A maturidade da turma é"] = st.selectbox("11. A maturidade da turma é:", opcoes)
-    respostas_turma["A colaboração entre colegas é"] = st.selectbox("12. A colaboração entre colegas é:", opcoes)
-    respostas_turma["A evolução ao longo do período foi"] = st.selectbox("13. A evolução ao longo do período foi:", ["Significativa", "Gradual", "Pouca", "Nenhuma"])
-
-    comentario_turma = st.text_area("14. Considerações gerais da turma")
-
-# =========================================================
-# GERAÇÃO DO RELATÓRIO
-# =========================================================
-if st.button("GERAR RELATÓRIO OFICIAL"):
-
-    texto = ""
-
-    if aluno:
-        for pergunta, resposta in respostas_aluno.items():
-            texto += f"{pergunta}: {resposta}\n"
-        texto += f"\nConsiderações Finais: {comentario_aluno}"
+# --- BOTÃO FINAL ---
+if st.button("🚀 FINALIZAR E GERAR RELATÓRIO", type="primary", use_container_width=True):
+    if not prof:
+        st.warning("Por favor, preencha o nome do professor.")
+    elif not model or not drive_service:
+        st.error("Serviços de IA ou Google Drive não estão prontos. Verifique os Secrets.")
     else:
-        for pergunta, resposta in respostas_turma.items():
-            texto += f"{pergunta}: {resposta}\n"
-        texto += f"\nConsiderações Finais: {comentario_turma}"
+        try:
+            # 1. SALVAR NO SHEETS
+            nova_linha = {
+                "Data": datetime.datetime.now().strftime("%d/%m/%Y"), 
+                "Prof": prof, "Turma": turma_sel, 
+                "Aluno": aluno_nome if aluno_nome else "TURMA"
+            }
+            df_atual = conn.read(spreadsheet=url_planilha, ttl=0)
+            df_final = pd.concat([df_atual, pd.DataFrame([nova_linha])], ignore_index=True)
+            conn.update(spreadsheet=url_planilha, data=df_final)
+            st.toast("✅ Planilha atualizada!")
 
-    prompt = f"""
-    Redija um relatório pedagógico institucional formal com base nas seguintes informações:
+            # 2. GERAR TEXTO COM IA
+            with st.spinner("🤖 IA redigindo relatório..."):
+                prompt = f"Relatório pedagógico. Aluno: {aluno_nome}. Desempenho: {p1}. Dificuldade: {p16}. Contexto: {coment_aluno}. Seja formal."
+                response = model.generate_content(prompt)
+                texto_ia = response.text
 
-    Professor: {professor}
-    Turma: {turma}
-    Aluno: {aluno if aluno else "Relatório Geral da Turma"}
+            # 3. CRIAR GOOGLE DOCS
+            file_metadata = {
+                'name': f'Relatório {aluno_nome if aluno_nome else turma_sel}',
+                'parents': [PASTA_DESTINO_ID],
+                'mimeType': 'application/vnd.google-apps.document'
+            }
+            res = drive_service.files().create(body=file_metadata, fields='id, webViewLink').execute()
+            
+            st.success("🎉 Concluído!")
+            st.link_button("📂 Abrir no Google Docs", res.get('webViewLink'))
+            st.markdown("### Prévia:")
+            st.write(texto_ia)
 
-    Avaliações:
-    {texto}
-
-    Estruture em:
-    - Análise Geral
-    - Pontos Fortes
-    - Pontos de Atenção
-    - Recomendações Pedagógicas
-    """
-
-    response = model.generate_content(prompt)
-    relatorio = response.text
-
-    st.success("Relatório gerado com sucesso!")
-    st.write(relatorio)
+        except Exception as e:
+            st.error(f"Erro no processamento: {e}")
