@@ -52,7 +52,7 @@ drive_service = configurar_drive()
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 url_planilha = "https://docs.google.com/spreadsheets/d/1bGcDE5Q-Dz0dhQgeqcHiLSS8WUqc2icvWb4k8SwxAwQ/edit#gid=1477512121"
-PASTA_DESTINO_ID = "1ZGdFybd_aPQZyvuPuitVB-JpZKc_nZP-"
+PASTA_DESTINO_ID = "1bGcDE5Q-Dz0dhQgeqcHiLSS8WUqc2icvWb4k8SwxAwQ"
 
 st.title("📝 Formulário de Conselho de Classe")
 
@@ -160,3 +160,4 @@ if st.button("🚀 FINALIZAR E GERAR RELATÓRIO", type="primary", use_container_
             st.info(texto_ia)
         except Exception as e:
             st.error(f"Erro: {e}")
+
